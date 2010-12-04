@@ -1,0 +1,31 @@
+
+
+Completed/usable:
+- build system (autotools)
+- project hosting (Drupal/Sourceforge)
+- user data storage with file and unixODBC modules
+- controller capable of retrieving user data and invoking the
+  HOTP algorithm
+- privilege separation: daemon process (dynalogind) for accepting 
+  TCP connections, conversing with a client process that wishes
+  to perform user authentication and invoking the controller routines
+
+Project roadmap:
+
+- finalise and document client-server protocol for use on the TCP socket
+
+- Adapt a PHP OpenID sample to utilise dynalogind by
+  communicating on the socket with the server
+
+- C client library for client-server communication
+  - Use cases for the C client library:
+    - PAM module
+    - PHP module
+    - Apache module
+
+- Java client JAR
+  - Use cases for the client JAR:
+    - authentication within Java based web applications (WAR deployments)
+
+- Development of a soft token solution for mobile platforms
+
