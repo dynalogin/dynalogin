@@ -1,7 +1,9 @@
 AUTOMAKE_OPTIONS = foreign dist-tarZ
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = doc m4/gnulib-tool.m4
+EXTRA_DIST = doc m4/gnulib-tool.m4 m4/gnulib-cache.m4
+dist-hook:
+	rm -rf `find $(distdir)/doc -name .svn`
 
 SUBDIRS = libdynalogin dynalogind
 
