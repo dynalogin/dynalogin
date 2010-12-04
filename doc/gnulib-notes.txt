@@ -1,0 +1,28 @@
+
+gnulib
+- not a shared library
+- rather, gnulib sources are intended to be copied into other projects
+- in dynalogin, a snapshot of the gnulib sources we have used is kept
+  in the dynalogin SVN
+- below, you can find the gnulib-tool command used to copy the required
+  gnulib components into the dynalogin source tree
+- this command was run on Debian 5.0 (lenny) on the amd64 architecture
+
+$ gnulib-tool --import --dir=. --lib=libgnu --source-base=lib --m4-base=m4 --doc-base=doc --tests-base=tests --aux-dir=build-aux --lgpl --libtool --macro-prefix=gl crypto/gc-hmac-sha1 getline check-version visibility strverscmp sys_stat
+
+
+You may need to add #include directives for the following .h files.
+  #include <stdio.h>
+  #include <sys/stat.h>
+  #include "check-version.h"
+  #include "gc.h"
+  #include "strverscmp.h"
+
+Don't forget to
+  - add "lib/Makefile" to AC_CONFIG_FILES in ./configure.ac,
+  - mention "lib" in SUBDIRS in Makefile.am,
+  - mention "-I m4" in ACLOCAL_AMFLAGS in Makefile.am,
+  - mention m4/gnulib-cache.m4 in EXTRA_DIST in Makefile.am.
+  - invoke gl_EARLY in ./configure.ac, right after AC_PROG_CC,
+  - invoke gl_INIT in ./configure.ac.
+

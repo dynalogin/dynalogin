@@ -1,0 +1,17 @@
+
+
+[ODBC Data Sources]
+
+dynalogin     = MySQL ODBC 3.51 Driver DSN
+
+[dynalogin]
+Driver       = MySQL
+Description  = MySQL ODBC 3.51 Driver DSN
+Server       = localhost
+Port         =
+User         = dynalogin
+Password     = dynalogin
+Database     = dynalogin
+Option       = 3
+Socket       =
+

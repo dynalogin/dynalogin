@@ -1,0 +1,29 @@
+
+
+1. Build the binaries (see BUILD.txt)
+
+2. Create the users file/database
+
+3. Create a user in the users file/database
+   
+     - the user's secret should be the same as the secret used
+       to initialise the token
+
+4. Run the test application:
+
+     ./dynalogin_tester username
+
+5. Generate a HOTP code from the token
+
+6. Enter the HOTP code into the tester
+
+7. Try various tests:
+
+     - attempt to re-use a token code
+     - attempt to generate more than HOTP_WINDOW (default 20) token codes
+       without entering any of them in the tester, and then try the next
+       code
+     - attempt to enter various random numbers
+     - attempt multiple consecutive failures
+     - inspect the database content after each attempt
+
