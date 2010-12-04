@@ -3,7 +3,7 @@
 AUTOMAKE_OPTIONS = foreign dist-tarZ
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = 
+EXTRA_DIST = dynalogind.conf
 
 SUBDIRS = 
 

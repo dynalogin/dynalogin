@@ -1,7 +1,7 @@
 AUTOMAKE_OPTIONS = foreign dist-tarZ
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = m4/gnulib-cache.m4
+EXTRA_DIST = doc m4/gnulib-tool.m4
 
 SUBDIRS = libdynalogin dynalogind
 
