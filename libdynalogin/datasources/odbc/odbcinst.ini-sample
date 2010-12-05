@@ -1,0 +1,7 @@
+
+[MySQL]
+Description = ODBC for MySQL
+Driver = /usr/lib/odbc/libmyodbc.so
+Setup = /usr/lib/odbc/libodbcmyS.so
+UsageCount = 2
+
