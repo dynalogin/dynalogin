@@ -1,5 +1,5 @@
 
-EXTRA_DIST = odbc.ini-sample README.mysql schema_mysql.sql
+EXTRA_DIST = odbc.ini-sample odbcinst.ini-sample README.mysql schema_mysql.sql
 
 AM_CFLAGS = -I../../ -DLOCALSTATEDIR='"$(localstatedir)"'
 
