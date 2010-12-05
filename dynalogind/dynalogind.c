@@ -80,6 +80,30 @@ apr_status_t send_answer(apr_socket_t *socket, const char *answer)
 	return APR_SUCCESS;
 }
 
+apr_status_t send_result(apr_socket_t *socket, int code)
+{
+	switch(code)
+	{
+	case 220:
+		return send_answer(socket, "220 Service ready\n");
+		break;
+        case 221:
+		return send_answer(socket, "221 Closing connection\n");
+                break;
+	case 250:
+		return send_answer(socket, "250 OK\n");
+		break;
+	case 401:
+		return send_answer(socket, "401 Unauthorized\n");
+		break;
+	case 500:
+		return send_answer(socket, "500 Error\n");
+                break;
+	default:
+		return APR_EINVAL;
+	}
+}
+
 void socket_thread_handle(socket_thread_data_t *td)
 {
 	char *buf;
@@ -92,6 +116,7 @@ void socket_thread_handle(socket_thread_data_t *td)
 
 	apr_pool_t *query_pool;
 
+	char *selected_mode;
 	dynalogin_userid_t userid;
 	dynalogin_code_t code;
 
@@ -99,6 +124,12 @@ void socket_thread_handle(socket_thread_data_t *td)
 	{
 		syslog(LOG_ERR, "failed to create query pool: %s",
 						apr_strerror(res, errbuf, ERRBUFLEN));
+		return;
+	}
+
+	if(send_result(td->socket, 220)!=APR_SUCCESS)
+	{
+		syslog(LOG_ERR, "failed to send greeting");
 		return;
 	}
 
@@ -114,40 +145,79 @@ void socket_thread_handle(socket_thread_data_t *td)
 			return;
 		}
 
-		if(argv[0] == NULL || argv[1] == NULL)
+		/* Examine the command sent by the client */
+		if(argv[0] == NULL)
 		{
 			syslog(LOG_WARNING, "insufficient tokens in query");
+                        res = send_result(td->socket, 500);
+		}
+		else if(strcasecmp(argv[0], "QUIT")==0)
+		{
+			send_result(td->socket, 221);
 			return;
 		}
-		userid=argv[0];
-		code=argv[1];
-		syslog(LOG_DEBUG, "attempting DYNALOGIN auth for user=%s", userid);
-		dynalogin_res = dynalogin_authenticate(td->dynalogin_session,
-				userid, code);
-
-		switch(dynalogin_res)
+                else if(strcasecmp(argv[0], "UDATA")==0)
 		{
-		case DYNALOGIN_SUCCESS:
-			syslog(LOG_DEBUG, "DYNALOGIN success for user=%s", userid);
-			res = send_answer(td->socket, "AUTH_SUCCESS\n");
-			break;
-		case DYNALOGIN_DENY:
-			syslog(LOG_DEBUG, "DYNALOGIN denied for user=%s", userid);
-			res = send_answer(td->socket, "AUTH_DENY\n");
-			break;
-		case DYNALOGIN_ERROR:
-			syslog(LOG_DEBUG, "DYNALOGIN error for user=%s", userid);
-			res = send_answer(td->socket, "AUTH_ERROR\n");
-			break;
-		default:
-			syslog(LOG_DEBUG, "DYNALOGIN unexpected result for user=%s", userid);
-			res = send_answer(td->socket, "AUTH_ERROR\n");
-		}
+			/* User sending user ID and response value */
+			selected_mode=argv[1];
+			userid=argv[2];
+			code=argv[3];
+			if(selected_mode == NULL)
+			{
+                                /* Command too short */
+                                syslog(LOG_WARNING, "insufficient tokens in query");
+                                res = send_result(td->socket, 500);
+			}
+			else if(strcasecmp(selected_mode, "HOTP")!=0)
+			{
+				/* We only support HOTP at the moment */
+				syslog(LOG_WARNING, "unsupported mode requested");
+				res = send_result(td->socket, 500);
+			}
+			else if(userid == NULL || code == NULL)
+			{
+				/* Command too short */
+				syslog(LOG_WARNING, "insufficient tokens in query");
+				res = send_result(td->socket, 500);
+			}
+			else
+			{
+				syslog(LOG_DEBUG, "attempting DYNALOGIN auth for user=%s", userid);
+				dynalogin_res = dynalogin_authenticate(td->dynalogin_session,
+					userid, code);
 
+				switch(dynalogin_res)
+				{
+				case DYNALOGIN_SUCCESS:
+					syslog(LOG_DEBUG, "DYNALOGIN success for user=%s", userid);
+					res = send_result(td->socket, 250);
+					break;
+				case DYNALOGIN_DENY:
+					/* User unknown or bad password */
+					syslog(LOG_DEBUG, "DYNALOGIN denied for user=%s", userid);
+					res = send_result(td->socket, 401);
+					break;
+				case DYNALOGIN_ERROR:
+					/* Error connecting to DB, etc */
+					syslog(LOG_DEBUG, "DYNALOGIN error for user=%s", userid);
+					res = send_result(td->socket, 500);
+					break;
+				default:
+					syslog(LOG_DEBUG, "DYNALOGIN unexpected result for user=%s", userid);
+					res = send_result(td->socket, 500);
+				}
+			}
+		}
+		else
+		{
+			/* Unrecognised command */
+			res = send_result(td->socket, 500);
+		}
+	
 		if(res != APR_SUCCESS)
 		{
 			syslog(LOG_ERR, "failed to send response: %s",
-							apr_strerror(res, errbuf, ERRBUFLEN));
+					apr_strerror(res, errbuf, ERRBUFLEN));
 			return;
 		}
 
