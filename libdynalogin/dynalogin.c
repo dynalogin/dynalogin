@@ -134,7 +134,7 @@ dynalogin_result_t dynalogin_authenticate
 	{
 		ERRMSG("userid not found");
 		fprintf(stderr, "userid was %s\n", userid);
-		return DYNALOGIN_ERROR;
+		return DYNALOGIN_DENY;
 	}
 
 	rc = hotp_validate_otp (
