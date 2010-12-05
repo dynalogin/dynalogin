@@ -1,0 +1,151 @@
+
+dynalogin
+
+Background
+----------
+
+This document describes the communication protocol between
+the dynalogind server process and the client.
+
+Roles
+-----
+
+  Server:
+  - has a database of user data
+  - implements one or more user verification algorithms, typically
+    based on a moving factor, such as HOTP, TOTP or OCRA
+
+  Client:
+  - a process such as a web application or UNIX login that wishes to
+    authenticate an end-user
+  - not assumed to be completely trustworthy - therefore, do not
+    disclose any sensitive data to the client, do not even
+    indicate if a particular user is known or not
+
+Note: further abstractions are possible, for example, the client
+could be a module within a RADIUS server.
+
+Communication mechanism
+-----------------------
+
+Communication between the client and server takes place over a
+stream-orientated connection, such as a TCP session or a UNIX domain
+socket.
+
+The communication mechanism is text based and loosely inspired by
+the SMTP and HTTP protocols.
+
+The communication could be encrypted with SSL but this is not mandatory.
+
+The default implementation only accepts connections from localhost for
+security reasons.
+
+Greeting
+--------
+
+The server process accepts a connection request from the client.  The
+server sends a greeting to the client.  The greeting provides
+the client with advice about the server's capabilities.
+
+211-Comment
+212-[Capability string] Comment
+212-...
+213-<challenge>
+220 <domain> Service ready
+
+221 <domain> <challenge>
+
+421 <domain> Service not available
+
+When the three digit code is followed by a hyphen, it means another
+message from the server will follow on the next line.
+
+Scenario 1: HOTP/TOTP client request
+------------------------------------
+
+If the server has indicated that it supports response-only HOTP/TOTP
+with the following header:
+
+212-[HOTP: HOTP-SHA1]
+
+The client may proceed as follows:
+
+Successful request:
+
+C: UDATA <mode> <user> <authcode>
+S: 250 OK
+
+Unsuccessful request:
+
+C: UDATA <mode> <user> <authcode>
+S: 401
+
+E.g:
+
+C: UDATA HOTP user1 123456
+S: 250 OK
+
+Scenario 2: Server challenges the client
+----------------------------------------
+
+DRAFT: this is for discussion only - OCRA is still a draft
+
+If the server wishes to challenge the client:
+- it will not indicate that HOTP/TOTP is supported
+- it will include a challenge in the greeting
+  or after the last successful command
+
+S: 213-<challenge>
+S: 250 OK
+C: UDATA <mode> <user> <authcode>
+S: 213-<challenge>
+S: 250 OK
+
+Scenario 3: Mutual challenge
+----------------------------
+
+DRAFT: this is for discussion only - OCRA is still a draft
+
+In this scenario, the client wishes to challenge the server
+
+S: 213-<challenge>
+S: 250 OK
+C: CHALLENGE <challenge-data>
+S: 214-<response> <challenge>
+S: 250 OK
+C: UDATA <mode> <user> <authcode>
+S: 213-<challenge>
+S: 250 OK
+
+If the client is not satisfied with the 214 response, it may disconnect
+or send the QUIT command.
+
+Closing the connection
+----------------------
+
+Either party may close the connection at any time by disconnecting.
+
+The client may close using the QUIT command.
+
+C: QUIT
+S: 221 Closing connection
+
+Error codes
+-----------
+
+500 Syntax error, command unrecognized
+501 Syntax error in parameters or arguments
+502 Command not implemented
+
+References
+----------
+
+http://www.ietf.org/rfc/rfc4226.txt
+  HOTP: An HMAC-Based One-Time Password Algorithm
+
+http://tools.ietf.org/html/draft-mraihi-totp-timebased-06
+  TOTP: Time-based One-time Password Algorithm
+
+http://tools.ietf.org/html/draft-mraihi-mutual-oath-hotp-variants-12
+  OCRA: OATH Challenge-Response Algorithms
+
