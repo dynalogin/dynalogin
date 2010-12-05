@@ -1,13 +1,28 @@
 
+# Tested on Debian 5
+#
+# apt-get install unixodbc-dev libmyodbc mysql-server
+#
 
 
-mysq1admin create --user=root --pass dynalogin
+mysqladmin create --user=root --pass dynalogin
 
 mysql --user=root --pass mysql
 
-insert into user (Host, User, Password) values ('localhost', 'dynalogin', password('dynalogin'));
-insert into user (Host, User, Password) values ('%', 'dynalogin', password('dynalogin'));
-insert into db values ('%', 'dynalogin', 'dynalogin', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y');
+insert into user
+  (Host, User, Password)
+values
+  ('localhost', 'dynalogin', password('dynalogin'));
+
+insert into user
+  (Host, User, Password)
+values
+  ('%', 'dynalogin', password('dynalogin'));
+
+insert into db values
+  ('%', 'dynalogin', 'dynalogin',
+    'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y',
+    'Y', 'Y', 'Y', 'Y', 'Y', 'Y');
 flush privileges;
 quit
 
