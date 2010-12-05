@@ -21,6 +21,7 @@
 #define ERRBUFLEN 1024
 
 #define DEFAULT_CONFIG_FILENAME "dynalogind.conf"
+#define DIR_SEP '/'
 
 typedef struct socket_thread_data_t {
 	apr_pool_t *pool;
@@ -267,7 +268,7 @@ int main(int argc, char *argv[])
 	}
 
 	cfg_filename = apr_psprintf(pool, "%s%c%s",
-			SYSCONFDIR, DEFAULT_CONFIG_FILENAME);
+			SYSCONFDIR, DIR_SEP, DEFAULT_CONFIG_FILENAME);
 	if(cfg_filename == NULL)
 	{
 		syslog(LOG_ERR, "apr_psprintf failed to create filename: %s",
@@ -278,7 +279,8 @@ int main(int argc, char *argv[])
 	if(dynalogin_read_config_from_file(&config, cfg_filename, pool)
 			!= DYNALOGIN_SUCCESS)
 	{
-		syslog(LOG_ERR, "failed to read config file %s");
+		syslog(LOG_ERR, "failed to read config file %s",
+				cfg_filename);
 		return 1;
 	}
 
