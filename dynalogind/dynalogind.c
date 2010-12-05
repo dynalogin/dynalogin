@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
 	apr_socket_t *socket, *socket_new;
 
 	char *cfg_filename;
-	char *bind_address = "0.0.0.0";
+	char *bind_address = "127.0.0.1";
 	int bind_port = 9050;
 	int qlen = 32;
 
