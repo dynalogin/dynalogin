@@ -1,0 +1,82 @@
+phpMyID - A standalone, single user, OpenID Identity Provider
+
+by: CJ Niemira <siege (at) siege (dot) org>
+(c) 2006-2007
+http://siege.org/projects/phpMyID
+
+
+**************************
+FREQUENTLY ASKED QUESTIONS
+**************************
+
+WHY IS PHPMYID SO UGLY?
+
+In a world full of CSS, embedded flash, and web based dancing balogna, it's hard
+to contemplate a modern web based software package that doesn't even ship with a
+logo image. Well, that's the case for phpMyID. It's about as "plain Jane" as you
+can get in the looks department, and that's intentional.
+
+The explanation is really quite simple: phpMyID isn't much to look at because,
+after you install it, you really shouldn't ever need look at it again. It's not
+a "destination," there's no dynamic content, and it won't attract visitors to
+your site. It doesn't even sport a "powered by" footer. One of the chief design
+goals for phpMyID was to keep it as light weight as possible, and designing a
+landing page full of named DIVs, CSS, logos, and spacer-dot-gif files simply
+isn't in line with that goal.
+
+So, why is phpMyID "ugly?" It's not... it's spartan!
+
+
+WHY ARE YOU USING (x) INSTEAD OF (y)?
+
+I get a lot of people who write to me and ask why phpMyID works the way it does.
+They're usually folks who think they know something about securiting writing
+to me to complain about my using MD5, or Diffie-Hellman, HTTP Digest Auth, or
+whatever the heck else for encryption/security. My answer is usually "go read
+the specs." I'm not using what I'm using because it's the most secure, I'm using
+it because it's what I have to use.
+
+
+OKAY, BUT WHY HTTP DIGEST... YOU'RE NOT LOCKED IN THERE, ARE YOU?
+
+HTTP Digest is a way to ensure that your password is not transmitted over the
+Internet in plain text. A form based login (like, basically everything else out
+there), or a Basic authentication method would not encrypt your password unless
+you were using SSL and owned a certificate. HTTP Digest is an easy, guaranteed
+way to ensure your password is handled in a safer way.
+
+
+WHY ISN'T THERE A WEB BASED CONFIG GUI?
+
+phpMyID is, more or less, "security" software. That being the case, I find it
+essential that I do my best to ensure my users employ good security practices,
+and the bottom line is that web based config tools are not secure enough. You
+have to allow your web server write access to a config file, and you have to
+send your credentials "over the wire" in a non-secure way to perform the setup
+at all.
+
+
+WHY IS GMP NOT ON BY (OR EVEN USED BY) DEFAULT?
+
+From the GMP home page (gmplib.org):
+
+	 GMP is very often miscompiled! We are seeing ever increasing
+	problems with miscompilations of the GMP code. It has now come
+	to the point where a compiler should be assumed to miscompile GMP.
+
+That about says it all as far as I'm concerned. If you know you have a good GMP
+library, you can switch it on.
+
+
+WHAT ABOUT MULTIPLE USERS?
+
+Some people like to complain that phpMyID doesn't support multiple users. No
+kidding... wasn't really meant to. If you want a high power, ultra efficient
+OpenID Server that people can sign up for and useses a memcached and backend
+database for lightning quick transactions... go build your own.
+
+But, if you want to support just a couple of users, you *can* do that. Just
+give everyone their own unique config file. Since each file has a unique URL,
+one config file per user will do the job.
+
+EOF

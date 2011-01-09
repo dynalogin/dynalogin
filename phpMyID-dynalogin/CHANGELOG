@@ -1,0 +1,75 @@
+Version 0.9
+- Bugfix: A weakness in the digest authentication method has been addressed. Thanks to forum user 'MAILER-DAEMON' for noticing.
+- Bugfix: A few PHP "Notices" have been corrected. Thanks to forum users 'thomas.leplus', and 'laplix' for the patches.
+-Bugfix: Paranoid mode ancestry checks did not work correctly in PHP4. Thanks to forum user 'sehrgut' for the patch.
+- Bugfix: Cancel URL did not have 'openid.mode=cancel' appended to it. Thanks to forum user 'zstoichev' for noticing.
+- Bugfix: Paranoid mode will not be invoked on checkid_immediate
+- The Suhosin incompatibility warning can now by bypassed.
+- HTML META refreshes have been replaced with HTTP 302 refreshes.
+
+Version 0.8
+- Paranoid mode was added. Users may now see and approve "trust_root" URLs that they are logging in to.
+- Support was added for embedding a MicroID.
+- Support was added for embedding a Pavatar. 
+
+Version 0.7
+- Bugfix: Non default query argument separators are now corrected.
+- Bugfix: Internal req_url key is (again) generated using HTTP_HOST instead of
+  SERVER_NAME
+- Session validation was removed from the self_check routine. It's still
+  conducted in the test mode. Some PHP setups had a problem with the way this
+  check was conducted, but anything more complex would require too much logic
+  for a lightweight self check.
+- Config file now 'requires' instead of 'includes' the program file
+
+Version 0.6
+- Bugfix: client supplied non-default dh_gen and dh_modulus values were not
+  being properly decoded.
+- Bugfix: build_query urlencoding bug corrected.
+- All references to the _GET and _POST superglobals were converted to reference
+   _REQUEST.
+- GMP is now supported as an alternative to bcmath.
+- An internal pure-PHP big math library was added as a fallback for systems
+  lacking either bcmath or GMP support.
+- Default charset is now universally defined as 'iso-8859-1'.
+- A 'test' mode was added to support big math library validation.
+- A "robots" meta tag is now included in the default html output.
+- Support for phpdoc documentation was added.
+- README/FAQ docs were updated.
+
+Version 0.5
+- Enhancements have been made to allow authorization under PHP running in CGI
+  mode.
+- Authorization/Authentication function names have been cleaned up.
+- Various warning messages have been removed.
+
+Version 0.4
+- Added support for external configuration files, and multiple user setups.
+- Adjusted the idp_url parameter to remove the port number if it is a default
+  value. This was necessary because some clients have decided to normalize the
+  URLs they receive, and while such behavior is valid according to RFCs 2396 and
+  3986, it's just a pain for me. I'd rather that all URLs be validated strictly
+  as provided.
+
+Version 0.3
+- The project has been renamed to phpMyID to avoid confusion with
+  www.myOpenId.com
+- Fixed a bug related to the use of the 'auth-int' Digest qop. This would have
+  only affected Opera users (as it's the only browser which supports auth-int).
+
+Version 0.2
+- Added support for PHP4, including a better mechanism for getting Digest
+  authentication headers which should work with non-Apache servers
+- Added a (hidden) logout mode, usable by calling
+  MyID.php?openid.mode=logout
+- Fixed a bug which occurred when associate mode was called and was unable to
+  produce a secure key. Future queries from that handle would then fail
+  check_authentication mode queries
+- The lifetime for a smart-mode client is now same as the default cache life of
+  the session minus ten seconds, which should be just under three hours
+- Renamed the 'sha20' function to 'sha1_20' (to designate using 'sha1' to get
+  a 20 byte hash)
+- Some code and debug cleanup
+
+Version 0.1
+- Initial Release

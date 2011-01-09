@@ -1,0 +1,21 @@
+# If you are running PHP in CGI mode you will need to add one set of these
+# directives to your .htaccess file, or your virtualhost configuration.
+#
+# The easiest way to do so is to simply rename this file ".htaccess"
+
+# Option 1, mod_rewrite (req)
+#RewriteEngine on
+#RewriteCond %{HTTP:Authorization} !^$
+#RewriteCond %{QUERY_STRING} openid.mode=authorize
+#RewriteCond %{QUERY_STRING} !auth=
+#RewriteCond %{REQUEST_METHOD} =GET
+#RewriteRule (.*) %{REQUEST_URI}?%{QUERY_STRING}&auth=%{HTTP:Authorization} [L]
+
+
+# Option 2, mod_rewrite (env)
+#RewriteEngine on
+#RewriteRule \.php$ - [E=PHP_AUTH_DIGEST:%{HTTP:Authorization},L]
+
+
+# Option 3, mod_setenvif
+#SetEnvIf Authorization "(.*)" PHP_AUTH_DIGEST=$1
