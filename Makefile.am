@@ -1,9 +1,10 @@
 AUTOMAKE_OPTIONS = foreign dist-tarZ
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = doc m4/gnulib-tool.m4 m4/gnulib-cache.m4
+EXTRA_DIST = doc m4/gnulib-tool.m4 m4/gnulib-cache.m4 phpMyID-dynalogin
 dist-hook:
 	rm -rf `find $(distdir)/doc -name .svn`
+	rm -rf `find $(distdir)/phpMyID-dynalogin -name .svn`
 
 SUBDIRS = libdynalogin dynalogind
 
