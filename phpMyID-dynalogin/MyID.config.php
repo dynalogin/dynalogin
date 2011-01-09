@@ -21,7 +21,7 @@
 $GLOBALS['profile'] = array(
 	# Basic Config - Required
 	'auth_username'	=> 	'test',
-	'auth_password' =>	'37fa04faebe5249023ed1f6cc867329b',
+#	'auth_password' =>	'37fa04faebe5249023ed1f6cc867329b',
 
 	# Optional Config - Please see README before setting these
 #	'microid'	=>	array('mailto:user@site', 'http://delegator'),
@@ -59,5 +59,6 @@ $GLOBALS['sreg'] = array (
 #	'timezone'		=> 'America/New_York'
 );
 
+require('dynalogin.php');
 require('MyID.php');
 ?>

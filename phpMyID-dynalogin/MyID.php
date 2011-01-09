@@ -259,14 +259,13 @@ function authorize_mode () {
 
 			// the entity body should always be null in this case
 			$entity_body = '';
-			$a1 = strtolower($profile['auth_password']);
 			$a2 = $hdr['qop'] == 'auth-int'
 				? md5(implode(':', array($_SERVER['REQUEST_METHOD'], $hdr['uri'], md5($entity_body))))
 				: md5(implode(':', array($_SERVER['REQUEST_METHOD'], $hdr['uri'])));
-			$ok = md5(implode(':', array($a1, $hdr['nonce'], $hdr['nc'], $hdr['cnonce'], $hdr['qop'], $a2)));
+			$digest_suffix = implode(':', array($hdr['nonce'], $hdr['nc'], $hdr['cnonce'], $hdr['qop'], $a2));
 
-			// successful login!
-			if ($hdr['response'] == $ok) {
+			// successful login?
+			if(dynalogin_auth($hdr['username'], $profile['auth_realm'], $hdr['response'], $digest_suffix) == 1) {
 				debug('Authentication successful');
 				debug('User session is: ' . session_id());
 				$_SESSION['auth_username'] = $hdr['username'];
