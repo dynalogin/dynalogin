@@ -1,9 +1,6 @@
 /*
  * dynalogin.c
  *
- *  Created on: 23 May 2010
- *      Author: daniel
- *
  *      Implementation of the public API functions
  */
 
@@ -24,6 +21,7 @@
 #define DIR_SEPARATOR '/'
 
 #define HOTP_WINDOW 20
+#define HOTP_DIGEST_DIGITS 6
 
 #define CFG_LINEBUF_LEN 512
 
@@ -160,6 +158,53 @@ dynalogin_result_t dynalogin_authenticate
 	h->datasource->user_update(ud, h->pool);
 	return res;
 }
+
+dynalogin_result_t dynalogin_authenticate_digest
+	(dynalogin_session_t *h, const dynalogin_userid_t userid,
+			const char *response, const char *realm,
+			const char *digest_suffix)
+{
+	int rc;
+	dynalogin_user_data_t *ud;
+	dynalogin_result_t res;
+
+	if(h == NULL || userid == NULL || response == NULL ||
+		realm == NULL || digest_suffix == NULL)
+		return DYNALOGIN_ERROR;
+
+	h->datasource->user_fetch(&ud, userid, h->pool);
+	if(ud == NULL)
+	{
+		ERRMSG("userid not found");
+		fprintf(stderr, "userid was %s\n", userid);
+		return DYNALOGIN_DENY;
+	}
+
+	rc = hotp_validate_otp_digest (
+			ud->secret,
+			strlen(ud->secret),
+			ud->counter,
+			HOTP_WINDOW, HOTP_DIGEST_DIGITS,
+			response, userid, realm, digest_suffix,
+			h->pool);
+	if(rc < 0)
+	{
+		ud->failure_count++;
+		res = DYNALOGIN_DENY;
+	}
+	else
+	{
+		ud->counter += (rc + 1);
+		ud->failure_count = 0;
+		time(&ud->last_success);
+		ud->last_code = "000000";
+		res = DYNALOGIN_SUCCESS;
+	}
+	time(&ud->last_attempt);
+	h->datasource->user_update(ud, h->pool);
+	return res;
+}
+
 
 dynalogin_result_t dynalogin_read_config_from_file(apr_hash_t **config,
 		const char *filename, apr_pool_t *pool)

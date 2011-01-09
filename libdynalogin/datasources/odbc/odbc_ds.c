@@ -1,9 +1,6 @@
 /*
  * odbc_ds.c
  *
- *  Created on: 6 Jun 2010
- *      Author: daniel
- *
  *  TO DO:
  *
  *  - read values from configuration file

@@ -1,8 +1,6 @@
 /*
  * test_ds.c
  *
- *  Created on: 23 May 2010
- *      Author: daniel
  */
 
 #include <stdio.h>

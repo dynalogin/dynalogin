@@ -1,9 +1,6 @@
 /*
  * dynalogin-datastore.h
  *
- *  Created on: 22 May 2010
- *      Author: daniel
- *
  *      This is the API between the datastore module
  *      and the dynalogin authentication controller
  */

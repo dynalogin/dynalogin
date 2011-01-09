@@ -15,20 +15,21 @@
 
 
 # Specification in the form of a command-line invocation:
-#   gnulib-tool --import --dir=. --lib=libgnu --source-base=lib --m4-base=m4 --doc-base=doc --aux-dir=build-aux --lgpl --libtool --macro-prefix=gl check-version crypto/gc-hmac-sha1 getline strverscmp sys_stat visibility
+#   gnulib-tool --import --dir=. --lib=libgnu --source-base=libdynalogin/lib --m4-base=m4 --doc-base=doc --aux-dir=build-aux --lgpl --libtool --macro-prefix=gl check-version crypto/gc-hmac-sha1 crypto/gc-md5 getline strverscmp sys_stat visibility
 
 # Specification in the form of a few gnulib-tool.m4 macro invocations:
 gl_LOCAL_DIR([])
 gl_MODULES([
   check-version
   crypto/gc-hmac-sha1
+  crypto/gc-md5
   getline
   strverscmp
   sys_stat
   visibility
 ])
 gl_AVOID([])
-gl_SOURCE_BASE([lib])
+gl_SOURCE_BASE([libdynalogin/lib])
 gl_M4_BASE([m4])
 gl_PO_BASE([])
 gl_DOC_BASE([doc])

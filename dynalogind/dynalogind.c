@@ -1,8 +1,6 @@
 /*
  * dynalogind.c
  *
- *  Created on: 29 May 2010
- *      Author: daniel
  */
 
 #include <stdio.h>
@@ -13,6 +11,7 @@
 #include <apr_file_io.h>
 #include <apr_network_io.h>
 #include <apr_pools.h>
+#include <apr_signal.h>
 #include <apr_strings.h>
 #include <apr_thread_proc.h>
 
@@ -104,6 +103,18 @@ apr_status_t send_result(apr_socket_t *socket, int code)
 	}
 }
 
+int count_pointers(char **argv)
+{
+	int c = 0;
+	char **_argv = argv;
+	while(*_argv != NULL)
+	{
+		_argv++;
+		c++;
+	}
+	return c;
+}
+
 void socket_thread_handle(socket_thread_data_t *td)
 {
 	char *buf;
@@ -116,9 +127,15 @@ void socket_thread_handle(socket_thread_data_t *td)
 
 	apr_pool_t *query_pool;
 
+	int ntokens;
+
 	char *selected_mode;
 	dynalogin_userid_t userid;
 	dynalogin_code_t code;
+
+	char *digest_realm;
+	char *digest_response;
+	char *digest_suffix;
 
 	if((res=apr_pool_create(&query_pool, td->pool))!=APR_SUCCESS)
 	{
@@ -144,9 +161,10 @@ void socket_thread_handle(socket_thread_data_t *td)
 							apr_strerror(res, errbuf, ERRBUFLEN));
 			return;
 		}
+		ntokens = count_pointers(argv);
 
 		/* Examine the command sent by the client */
-		if(argv[0] == NULL)
+		if(ntokens < 1)
 		{
 			syslog(LOG_WARNING, "insufficient tokens in query");
                         res = send_result(td->socket, 500);
@@ -160,52 +178,92 @@ void socket_thread_handle(socket_thread_data_t *td)
 		{
 			/* User sending user ID and response value */
 			selected_mode=argv[1];
-			userid=argv[2];
-			code=argv[3];
-			if(selected_mode == NULL)
+			if(ntokens < 1)
 			{
                                 /* Command too short */
                                 syslog(LOG_WARNING, "insufficient tokens in query");
                                 res = send_result(td->socket, 500);
 			}
-			else if(strcasecmp(selected_mode, "HOTP")!=0)
+			else if(strcasecmp(selected_mode, "HOTP")==0)
 			{
-				/* We only support HOTP at the moment */
-				syslog(LOG_WARNING, "unsupported mode requested");
-				res = send_result(td->socket, 500);
-			}
-			else if(userid == NULL || code == NULL)
-			{
-				/* Command too short */
-				syslog(LOG_WARNING, "insufficient tokens in query");
-				res = send_result(td->socket, 500);
-			}
-			else
-			{
-				syslog(LOG_DEBUG, "attempting DYNALOGIN auth for user=%s", userid);
-				dynalogin_res = dynalogin_authenticate(td->dynalogin_session,
-					userid, code);
-
-				switch(dynalogin_res)
+				userid=argv[2];
+				code=argv[3];
+				if(ntokens < 4)
 				{
-				case DYNALOGIN_SUCCESS:
-					syslog(LOG_DEBUG, "DYNALOGIN success for user=%s", userid);
-					res = send_result(td->socket, 250);
-					break;
-				case DYNALOGIN_DENY:
-					/* User unknown or bad password */
-					syslog(LOG_DEBUG, "DYNALOGIN denied for user=%s", userid);
-					res = send_result(td->socket, 401);
-					break;
-				case DYNALOGIN_ERROR:
-					/* Error connecting to DB, etc */
-					syslog(LOG_DEBUG, "DYNALOGIN error for user=%s", userid);
-					res = send_result(td->socket, 500);
-					break;
-				default:
-					syslog(LOG_DEBUG, "DYNALOGIN unexpected result for user=%s", userid);
+					/* Command too short */
+					syslog(LOG_WARNING, "insufficient tokens in query");
 					res = send_result(td->socket, 500);
 				}
+				else
+				{
+					syslog(LOG_DEBUG, "attempting DYNALOGIN auth for user=%s", userid);
+					dynalogin_res = dynalogin_authenticate(td->dynalogin_session,
+						userid, code);
+
+					switch(dynalogin_res)
+					{
+					case DYNALOGIN_SUCCESS:
+						syslog(LOG_DEBUG, "DYNALOGIN success for user=%s", userid);
+						res = send_result(td->socket, 250);
+						break;
+					case DYNALOGIN_DENY:
+						/* User unknown or bad password */
+						syslog(LOG_DEBUG, "DYNALOGIN denied for user=%s", userid);
+						res = send_result(td->socket, 401);
+						break;
+					case DYNALOGIN_ERROR:
+						/* Error connecting to DB, etc */
+						syslog(LOG_DEBUG, "DYNALOGIN error for user=%s", userid);
+						res = send_result(td->socket, 500);
+						break;
+					default:
+						syslog(LOG_DEBUG, "DYNALOGIN unexpected result for user=%s", userid);
+						res = send_result(td->socket, 500);
+					}
+				}
+			} else if (strcasecmp(selected_mode, "HOTP-DIGEST")==0)
+			{
+				/* HOTP Digest mode */
+				userid = argv[2];
+				digest_realm = argv[3];
+				digest_response = argv[4];
+				digest_suffix = argv[5];
+				if(ntokens < 6)
+				{
+					/* Command too short */
+					syslog(LOG_WARNING, "insufficient tokens in query");
+					res = send_result(td->socket, 500);
+				}
+				else
+				{
+					syslog(LOG_DEBUG, "attempting DYNALOGIN digest auth for user=%s", userid);
+					dynalogin_res = dynalogin_authenticate_digest(td->dynalogin_session, 
+						userid, digest_response, digest_realm, digest_suffix);
+
+					switch(dynalogin_res)
+					{
+					case DYNALOGIN_SUCCESS:
+						syslog(LOG_DEBUG, "DYNALOGIN success for user=%s", userid);
+						res = send_result(td->socket, 250);
+						break;
+					case DYNALOGIN_DENY:
+						/* User unknown or bad password */
+						syslog(LOG_DEBUG, "DYNALOGIN denied for user=%s", userid);
+						res = send_result(td->socket, 401);
+						break;
+					case DYNALOGIN_ERROR:
+						/* Error connecting to DB, etc */
+						syslog(LOG_DEBUG, "DYNALOGIN error for user=%s", userid);
+						res = send_result(td->socket, 500);
+						break;
+					default:
+						syslog(LOG_DEBUG, "DYNALOGIN unexpected result for user=%s", userid);
+						res = send_result(td->socket, 500);
+					}
+				}
+			} else {
+				syslog(LOG_WARNING, "unsupported mode requested");
+                        	res = send_result(td->socket, 500);
 			}
 		}
 		else
@@ -327,6 +385,9 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "apr_initialize failed\n");
 		return 1;
 	}
+
+	/* Just return an error if a client closes a socket */
+	apr_signal_block(SIGPIPE);
 
 	openlog(argv[0], LOG_PID, LOG_AUTHPRIV);
 

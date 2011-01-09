@@ -40,7 +40,7 @@ AC_DEFUN([gl_INIT],
   m4_pushdef([gl_LIBSOURCES_LIST], [])
   m4_pushdef([gl_LIBSOURCES_DIR], [])
   gl_COMMON
-  gl_source_base='lib'
+  gl_source_base='libdynalogin/lib'
   gl_EOVERFLOW
   gl_CHECK_VERSION
   gl_GC
@@ -50,6 +50,8 @@ AC_DEFUN([gl_INIT],
   fi
   gl_GC_HMAC_SHA1
   gl_MODULE_INDICATOR([gc-hmac-sha1])
+  gl_GC_MD5
+  gl_MODULE_INDICATOR([gc-md5])
   gl_FUNC_GETDELIM
   gl_STDIO_MODULE_INDICATOR([getdelim])
   gl_FUNC_GETLINE
@@ -157,7 +159,7 @@ AC_DEFUN([gl_REPLACE_FUNCS], [
 AC_DEFUN([gl_LIBSOURCES], [
   m4_foreach([_gl_NAME], [$1], [
     m4_if(_gl_NAME, [alloca.c], [], [
-      m4_define([gl_LIBSOURCES_DIR], [lib])
+      m4_define([gl_LIBSOURCES_DIR], [libdynalogin/lib])
       m4_append([gl_LIBSOURCES_LIST], _gl_NAME, [ ])
     ])
   ])
@@ -205,6 +207,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/getline.c
   lib/hmac-sha1.c
   lib/hmac.h
+  lib/md5.c
+  lib/md5.h
   lib/memxor.c
   lib/memxor.h
   lib/realloc.c
@@ -222,6 +226,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/eoverflow.m4
   m4/extensions.m4
   m4/gc-hmac-sha1.m4
+  m4/gc-md5.m4
   m4/gc.m4
   m4/getdelim.m4
   m4/getline.m4
@@ -233,6 +238,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/lib-prefix.m4
   m4/longlong.m4
   m4/malloc.m4
+  m4/md5.m4
   m4/memxor.m4
   m4/onceonly.m4
   m4/realloc.m4

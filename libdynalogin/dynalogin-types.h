@@ -1,9 +1,6 @@
 /*
  * dynalogin-types.h
  *
- *  Created on: 23 May 2010
- *      Author: daniel
- *
  *      Types exposed in the APIs
  */
 

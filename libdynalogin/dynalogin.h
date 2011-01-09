@@ -1,9 +1,6 @@
 /*
  * dynalogin.h
  *
- *  Created on: 23 May 2010
- *      Author: daniel
- *
  *      This is the API describing the services provided
  *      by the dynalogin authentication controller to other
  *      applications
@@ -34,6 +31,11 @@ void dynalogin_done(dynalogin_session_t *h);
 dynalogin_result_t dynalogin_authenticate
 	(dynalogin_session_t *h, const dynalogin_userid_t userid,
 			const dynalogin_code_t code);
+
+dynalogin_result_t dynalogin_authenticate_digest
+        (dynalogin_session_t *h, const dynalogin_userid_t userid,
+                        const char *response, const char *realm,
+			const char *digest_suffix);
 
 dynalogin_result_t dynalogin_read_config_from_file(apr_hash_t **config,
 		const char *filename, apr_pool_t *pool);

@@ -1,9 +1,6 @@
 /*
  * fs_ds.c
  *
- *  Created on: 31 May 2010
- *      Author: daniel
- *
  *  File format:
  *      userid:secret:counter:failure-count:
  *          locked:last_success:last_attempt:last_code
