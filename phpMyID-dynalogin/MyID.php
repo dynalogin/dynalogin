@@ -1538,7 +1538,9 @@ function url_descends ( $child, $parent ) {
 function user_session () {
 	global $proto, $profile;
 
-	session_name('phpMyID_Server');
+	if (! array_key_exists('session_cookie', $profile))
+		$profile['session_cookie'] = 'phpMyID_Server';
+	session_name($profile['session_cookie']);
 	@session_start();
 
 	$profile['authorized'] = (isset($_SESSION['auth_username'])

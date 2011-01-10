@@ -39,6 +39,7 @@ $GLOBALS['profile'] = array(
 
 	# Added during dynalogin integration, see README-dynalogin
 	'require_ssl'   =>      true,
+	'session_cookie'	=>	'phpMyID_Server',
 
 	# Debug Config - Please see README before setting these
 #	'debug'		=>	false,
