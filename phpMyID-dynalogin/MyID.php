@@ -1700,6 +1700,14 @@ $GLOBALS['port'] = ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == 'on' && $_
  */
 $GLOBALS['proto'] = (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == 'on') ? 'https' : 'http';
 
+/**
+ * Make sure SSL/TLS is used unless over-ridden
+ */
+if (! array_key_exists('require_ssl', $profile))
+	$profile['require_ssl'] = true;
+if($profile['require_ssl'] && $GLOBALS['proto'] != 'https')
+	error_500('require_ssl is true and you are not using TLS/SSL.  The session cookie can be observed by an unauthorised user if you allow non-SSL connections.');
+
 // Set the authorization state - DO NOT OVERRIDE
 $profile['authorized'] = false;
 

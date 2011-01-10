@@ -37,6 +37,9 @@ $GLOBALS['profile'] = array(
 #	'lifetime'	=>	1440,
 #	'paranoid'	=>	false, # EXPERIMENTAL
 
+	# Added during dynalogin integration, see README-dynalogin
+	'require_ssl'   =>      true,
+
 	# Debug Config - Please see README before setting these
 #	'debug'		=>	false,
 #	'logfile'	=>	'/tmp/phpMyID.debug.log',
