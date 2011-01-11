@@ -265,7 +265,7 @@ function authorize_mode () {
 			$digest_suffix = implode(':', array($hdr['nonce'], $hdr['nc'], $hdr['cnonce'], $hdr['qop'], $a2));
 
 			// successful login?
-			if(dynalogin_auth($hdr['username'], $profile['auth_realm'], $hdr['response'], $digest_suffix) == 1) {
+			if(dynalogin_auth($hdr['username'], $profile['auth_realm'], $hdr['response'], $digest_suffix, $profile['dynalogin_host'], $profile['dynalogin_port']) == 1) {
 				debug('Authentication successful');
 				debug('User session is: ' . session_id());
 				$_SESSION['auth_username'] = $hdr['username'];
@@ -1709,6 +1709,14 @@ if (! array_key_exists('require_ssl', $profile))
 	$profile['require_ssl'] = true;
 if($profile['require_ssl'] && $GLOBALS['proto'] != 'https')
 	error_500('require_ssl is true and you are not using TLS/SSL.  The session cookie can be observed by an unauthorised user if you allow non-SSL connections.');
+
+/**
+ * Make sure dynalogin host/port configured or use default
+ */
+if (! array_key_exists('dynalogin_host', $profile))
+	$profile['dynalogin_host'] = 'localhost';
+if (! array_key_exists('dynalogin_port', $profile))
+        $profile['dynalogin_host'] = 9050;
 
 // Set the authorization state - DO NOT OVERRIDE
 $profile['authorized'] = false;

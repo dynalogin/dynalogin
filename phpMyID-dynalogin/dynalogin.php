@@ -21,10 +21,8 @@ function dynalogin_read($sock) {
   return FALSE;
 }
 
-function dynalogin_auth($user, $realm, $response, $digest_suffix) {
-
-  $server = "127.0.0.1";
-  $port = "9050";
+function dynalogin_auth($user, $realm, $response, $digest_suffix,
+    $server, $port) {
 
   $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
   socket_connect($sock, $server, $port);
