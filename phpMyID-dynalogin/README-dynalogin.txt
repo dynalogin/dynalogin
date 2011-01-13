@@ -5,9 +5,7 @@ Copy all files to the web server directory
 Edit MyID.config.php
 - change the username so that it matches a username 
   in the dynalogin user list
-
-Edit dynalogin.php
-- update the hostname and port, should
+- update the dynalogind hostname and port, should
   match the details used by dynalogind
 
 Rename MyID.config.php to index.php
