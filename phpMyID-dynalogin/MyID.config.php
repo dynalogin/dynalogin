@@ -20,7 +20,7 @@
  */
 $GLOBALS['profile'] = array(
 	# Basic Config - Required
-	'auth_username'	=> 	'test',
+#	'auth_username'	=> 	'test',
 #	'auth_password' =>	'37fa04faebe5249023ed1f6cc867329b',
 
 	# Optional Config - Please see README before setting these

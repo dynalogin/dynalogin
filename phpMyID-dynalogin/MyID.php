@@ -1390,10 +1390,12 @@ function self_check () {
 			error_500("phpMyID is not compatible with '$x'");
 	}
 
-	$keys = array('auth_username', 'auth_password');
+	$keys = array('auth_username');
 	foreach ($keys as $key) {
 		if (! array_key_exists($key, $profile))
 			error_500("'$key' is missing from your profile.");
+		if ($profile[$key] == '')
+			error_500("'$key' is empty.");
 	}
 
 	if (! isset($sreg) || ! is_array($sreg))
@@ -1680,6 +1682,12 @@ if (function_exists('mb_internal_encoding'))
 // Avoid problems with non-default arg_separator.output settings
 // Credit for this goes to user 'prelog' on the forums
 ini_set('arg_separator.output', '&');
+
+/**
+ * Detect username from URL if necessary
+ */
+if (! array_key_exists('auth_username', $profile))
+	$profile['auth_username'] = ltrim($_SERVER['PATH_INFO'], '/');
 
 // Do a check to be sure everything is set up correctly
 self_check();
