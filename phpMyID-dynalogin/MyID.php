@@ -1543,6 +1543,14 @@ function user_session () {
 	if (! array_key_exists('session_cookie', $profile))
 		$profile['session_cookie'] = 'phpMyID_Server';
 	session_name($profile['session_cookie']);
+	$cookie_info = session_get_cookie_params();
+	$request_uri=$_SERVER['REQUEST_URI'];
+	# strip off query string, if any exists
+	$qm = strpos($request_uri,"?");
+	if ($qm)
+		$request_uri = substr($request_uri, 0, $qm);
+	session_set_cookie_params(0, $request_uri, $cookie_info['domain'],
+		$profile['require_ssl']);
 	@session_start();
 
 	$profile['authorized'] = (isset($_SESSION['auth_username'])
