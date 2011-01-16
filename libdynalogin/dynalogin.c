@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <syslog.h>
 
 #include <apr_dso.h>
 #include <apr_file_io.h>
