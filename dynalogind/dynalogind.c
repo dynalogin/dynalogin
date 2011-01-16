@@ -22,6 +22,13 @@
 #define DEFAULT_CONFIG_FILENAME "dynalogind.conf"
 #define DIR_SEP '/'
 
+#define DYNALOGIND_PARAM_DETACH "dynalogind.detach"
+
+#define GET_INT_PARAM(r, m, s) \
+        if(apr_hash_get(m, s, APR_HASH_KEY_STRING) == NULL) \
+                { syslog(LOG_ERR, "missing parameter %s", s); exit(-1); } \
+	r = atoi(apr_hash_get(m, s, APR_HASH_KEY_STRING));
+
 typedef struct socket_thread_data_t {
 	apr_pool_t *pool;
 	apr_socket_t *socket;
@@ -375,6 +382,7 @@ int main(int argc, char *argv[])
 	char *bind_address = "127.0.0.1";
 	int bind_port = 9050;
 	int qlen = 32;
+	int cfg_detach = 1;
 
 	int done = 0;
 
@@ -422,8 +430,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	/* Daemonize */
-	if((res=apr_proc_detach(0)) != APR_SUCCESS)
+	/* Daemonize? */
+	GET_INT_PARAM(cfg_detach, config, DYNALOGIND_PARAM_DETACH)
+	if((res=apr_proc_detach(cfg_detach)) != APR_SUCCESS)
 	{
 		syslog(LOG_ERR, "failed to detach: %s",
 				apr_strerror(res, errbuf, ERRBUFLEN));
