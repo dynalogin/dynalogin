@@ -29,7 +29,7 @@
 
 #define GET_STRING_PARAM(r, m, s) \
 	if((r = (char *)apr_hash_get(m, s, APR_HASH_KEY_STRING)) == NULL) \
-		{ syslog(LOG_ERR, "missing parameter"); return DYNALOGIN_ERROR; }
+		{ syslog(LOG_ERR, "missing parameter %s", s); return DYNALOGIN_ERROR; }
 
 #define ERRMSG(s) fprintf(stderr, "%s\n", s)
 
