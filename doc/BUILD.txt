@@ -14,8 +14,12 @@
 
 3. configure
 
-  ./configure CFLAGS="-I /usr/include/apr-1.0"
+  #./configure CFLAGS="-I /usr/include/apr-1.0"
   ./configure --enable-shared CFLAGS="-I/usr/include/apr-1.0 -g"
+
+  possible alternative for 32 bit build:
+
+  ./configure --enable-shared CFLAGS="-I/usr/include/apr-1.0 -D_LARGEFILE64_SOURCE -g" --prefix=/usr/local 
 
 4. build
 
