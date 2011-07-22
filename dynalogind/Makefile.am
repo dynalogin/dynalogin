@@ -13,7 +13,7 @@ AM_CFLAGS += -I../libdynalogin
 
 AM_LDFLAGS = -lapr-1
 
-bin_PROGRAMS = dynalogind
+sbin_PROGRAMS = dynalogind
 dynalogind_SOURCES = dynalogind.c
 dynalogind_LDADD = ../libdynalogin/libdynalogin.la
 
