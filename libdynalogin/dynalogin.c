@@ -15,9 +15,11 @@
 #include <apr_pools.h>
 #include <apr_strings.h>
 
-#include "hotp.h"
+#include <oath.h>
+
 #include "dynalogin.h"
 #include "dynalogin-datastore.h"
+#include "hotpdigest.h"
 
 #define DIR_SEPARATOR '/'
 
@@ -49,7 +51,7 @@ dynalogin_result_t dynalogin_init(dynalogin_session_t **session,
 
 	*session = NULL;
 
-	if(hotp_init() != HOTP_OK)
+	if(oath_init() != OATH_OK)
 	{
 		ERRMSG("libhotp init failed");
 		return DYNALOGIN_ERROR;
@@ -114,7 +116,7 @@ void dynalogin_done(dynalogin_session_t *h)
 	if(h->datasource->done != NULL)
 		h->datasource->done();
 	apr_dso_unload(h->dso_handle);
-	hotp_done();
+	oath_done();
 }
 
 dynalogin_result_t dynalogin_authenticate
@@ -136,7 +138,7 @@ dynalogin_result_t dynalogin_authenticate
 		return DYNALOGIN_DENY;
 	}
 
-	rc = hotp_validate_otp (
+	rc = oath_hotp_validate (
 			ud->secret,
 			strlen(ud->secret),
 			ud->counter,
@@ -168,6 +170,7 @@ dynalogin_result_t dynalogin_authenticate_digest
 	int rc;
 	dynalogin_user_data_t *ud;
 	dynalogin_result_t res;
+	struct oath_digest_callback_pvt_t pvt;
 
 	if(h == NULL || userid == NULL || response == NULL ||
 		realm == NULL || digest_suffix == NULL)
@@ -181,13 +184,24 @@ dynalogin_result_t dynalogin_authenticate_digest
 		return DYNALOGIN_DENY;
 	}
 
-	rc = hotp_validate_otp_digest (
+	pvt.response = response;
+	pvt.username = userid;
+	pvt.realm = realm;
+	pvt.digest_suffix = digest_suffix;
+
+	if(apr_pool_create(&(pvt.pool), h->pool) != APR_SUCCESS)
+	{
+		return DYNALOGIN_ERROR;
+	}
+
+	rc = oath_hotp_validate_callback (
 			ud->secret,
 			strlen(ud->secret),
 			ud->counter,
 			HOTP_WINDOW, HOTP_DIGEST_DIGITS,
-			response, userid, realm, digest_suffix,
-			h->pool);
+			oath_digest_callback,
+			&pvt);
+	apr_pool_destroy(pvt.pool);
 	if(rc < 0)
 	{
 		ud->failure_count++;

@@ -23,14 +23,17 @@
 #include <string.h>		/* For size_t.t */
 #include <time.h>		/* For time_t. */
 
+struct oath_digest_callback_pvt_t
+{
+	apr_pool_t *pool;
+	const char *response;
+	const char *username;
+	const char *realm;
+	const char *digest_suffix;
+};
 
-extern HOTPAPI int hotp_validate_otp_digest (const char *secret,
-                   			size_t secret_length,
-                   			uint64_t start_moving_factor,
-                   			size_t window,
-                   			int digits, const char *response,
-                   			const char *username, const char *realm,
-                   			const char *digest_suffix,
-                   			apr_pool_t *pool);
+/* oath_validate_strcmp_function for use by
+   oath_hotp_validate_callback */
+int oath_digest_callback(void *handle, const char *test_otp);
 
 #endif /* HOTPDIGEST_H */

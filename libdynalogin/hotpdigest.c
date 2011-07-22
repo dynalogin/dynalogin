@@ -7,7 +7,8 @@
 
 #include <config.h>
 
-#include "hotp.h"
+#include "oath.h"
+#include "hotpdigest.h"
 
 #include <stdio.h>		/* For snprintf, getline. */
 #include <string.h>		/* For strverscmp. */
@@ -57,19 +58,10 @@ make_hex_string(const char *in, char *out, size_t len)
  *   or %HOTP_INVALID_OTP if no OTP was found in OTP window, or an
  *   error code.
  **/
-int
-hotp_validate_otp_digest (const char *secret,
-		   size_t secret_length,
-		   uint64_t start_moving_factor,
-		   size_t window,
-		   int digits, const char *response,
-		   const char *username, const char *realm,
-		   const char *digest_suffix,
-		   apr_pool_t *pool)
+/* oath_validate_strcmp_function for use by
+   oath_hotp_validate_callback */
+int oath_digest_callback(void *handle, const char *test_otp)
 {
-  unsigned iter = 0;
-  char tmp_otp[10];
-  int rc;
   char *a1;  /* username:realm:password */
   char ha1_raw[GC_MD5_DIGEST_SIZE];  /* H(a1) */
   char ha1_hex[(GC_MD5_DIGEST_SIZE * 2) + 1];
@@ -77,68 +69,38 @@ hotp_validate_otp_digest (const char *secret,
   char _response_raw[GC_MD5_DIGEST_SIZE];
   char _response[(GC_MD5_DIGEST_SIZE * 2) + 1]; /* our calculation of the response */
 
-  apr_pool_t *_pool;
-
-  if(apr_pool_create(&_pool, pool) != APR_SUCCESS)
-    {
-      return HOTP_CRYPTO_ERROR;
-    }
-
-  do
-    {
-      rc = hotp_generate_otp (secret,
-			      secret_length,
-			      start_moving_factor + iter,
-			      digits,
-			      false, HOTP_DYNAMIC_TRUNCATION, tmp_otp);
-      if (rc != HOTP_OK)
-        {
-          apr_pool_destroy(_pool);
-	  return rc;
-        }
+  struct oath_digest_callback_pvt_t *pvt =
+    (struct oath_digest_callback_pvt_t *)handle;
 
       /* Assemble A1 */
-      if((a1 = apr_pstrcat(_pool, 
-             username, ":", realm, ":", tmp_otp, NULL)) == NULL)
+      if((a1 = apr_pstrcat(pvt->pool, 
+             pvt->username, ":", pvt->realm, ":", test_otp, NULL)) == NULL)
         {
-          apr_pool_destroy(_pool);
-          return HOTP_CRYPTO_ERROR;
+          return -1;
         }
 
       /* Calculate H(A1) */
       if(gc_md5(a1, strlen(a1), ha1_raw) != 0)
         {
-          apr_pool_destroy(_pool);
-          return HOTP_CRYPTO_ERROR;
+          return -1;
         }
       make_hex_string(ha1_raw, ha1_hex, GC_MD5_DIGEST_SIZE);
 
       /* Assemble argument for calculating response */
-      if((response_arg = apr_pstrcat(_pool,
-            ha1_hex, ":", digest_suffix, NULL)) == NULL)
+      if((response_arg = apr_pstrcat(pvt->pool,
+            ha1_hex, ":", pvt->digest_suffix, NULL)) == NULL)
         {
-          apr_pool_destroy(_pool);
-          return HOTP_CRYPTO_ERROR;
+          return -1;
         }
 
       /* Calculate response */
       if(gc_md5(response_arg, strlen(response_arg), _response_raw) != 0)
         {
-          apr_pool_destroy(_pool);
-          return HOTP_CRYPTO_ERROR;
+          return -1;
         }
       make_hex_string(_response_raw, _response, GC_MD5_DIGEST_SIZE);
 
-      fprintf(stderr, "a1 = %s ha1 = %s response = %s\n", a1, ha1_hex, _response);
+      return strcmp (pvt->response, _response);
 
-      if (strcmp (response, _response) == 0) {
-        apr_pool_destroy(_pool);
-	return iter;
-      }
-    }
-  while (window - iter++ > 0);
-
-  apr_pool_destroy(_pool);
-  return HOTP_INVALID_OTP;
 }
 
