@@ -36,6 +36,13 @@
 
 #define ERRMSG(s) fprintf(stderr, "%s\n", s)
 
+struct oath_callback_pvt_t
+{
+	apr_pool_t *pool;
+	const char *code;
+        const char *password;
+};
+
 /*
  * Initialise a HOTP authentication stack.
  *
@@ -119,6 +126,24 @@ void dynalogin_done(dynalogin_session_t *h)
 	oath_done();
 }
 
+int oath_callback(void *handle, const char *test_otp) {
+	const char *password = "";
+	char *test_str;
+
+	struct oath_callback_pvt_t *pvt =
+		(struct oath_callback_pvt_t *)handle;
+	if(pvt->password != NULL)
+		password = pvt->password;	
+
+	if((test_str = apr_pstrcat(pvt->pool,
+             password, test_otp, NULL)) == NULL)
+	{
+		return -1;
+	}
+
+	return strcmp(pvt->code, test_str);
+}
+
 dynalogin_result_t dynalogin_authenticate
 	(dynalogin_session_t *h, const dynalogin_userid_t userid,
 			const dynalogin_code_t code)
@@ -126,6 +151,7 @@ dynalogin_result_t dynalogin_authenticate
 	int rc;
 	dynalogin_user_data_t *ud;
 	dynalogin_result_t res;
+	struct oath_callback_pvt_t pvt;
 
 	if(h == NULL || userid == NULL || code == NULL)
 		return DYNALOGIN_ERROR;
@@ -138,12 +164,22 @@ dynalogin_result_t dynalogin_authenticate
 		return DYNALOGIN_DENY;
 	}
 
-	rc = oath_hotp_validate (
+	pvt.code = code;
+	pvt.password = ud->password;
+
+	if(apr_pool_create(&(pvt.pool), h->pool) != APR_SUCCESS)
+	{
+		return DYNALOGIN_ERROR;
+	}
+
+	rc = oath_hotp_validate_callback (
 			ud->secret,
 			strlen(ud->secret),
 			ud->counter,
-			HOTP_WINDOW,
-			code);
+			HOTP_WINDOW, HOTP_DIGEST_DIGITS,
+			oath_callback,
+			&pvt);
+	apr_pool_destroy(pvt.pool);
 	if(rc < 0)
 	{
 		ud->failure_count++;
@@ -188,6 +224,7 @@ dynalogin_result_t dynalogin_authenticate_digest
 	pvt.username = userid;
 	pvt.realm = realm;
 	pvt.digest_suffix = digest_suffix;
+	pvt.password = ud->password;
 
 	if(apr_pool_create(&(pvt.pool), h->pool) != APR_SUCCESS)
 	{

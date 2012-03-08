@@ -68,13 +68,17 @@ int oath_digest_callback(void *handle, const char *test_otp)
   char *response_arg;   /* H(a1):digest_suffix */
   char _response_raw[GC_MD5_DIGEST_SIZE];
   char _response[(GC_MD5_DIGEST_SIZE * 2) + 1]; /* our calculation of the response */
+  char *password = "";
 
   struct oath_digest_callback_pvt_t *pvt =
     (struct oath_digest_callback_pvt_t *)handle;
 
+  if(pvt->password != NULL)
+    password = pvt->password;
+
       /* Assemble A1 */
       if((a1 = apr_pstrcat(pvt->pool, 
-             pvt->username, ":", pvt->realm, ":", test_otp, NULL)) == NULL)
+             pvt->username, ":", pvt->realm, ":", password, test_otp, NULL)) == NULL)
         {
           return -1;
         }

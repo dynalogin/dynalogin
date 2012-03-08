@@ -30,6 +30,7 @@ struct oath_digest_callback_pvt_t
 	const char *username;
 	const char *realm;
 	const char *digest_suffix;
+	const char *password;
 };
 
 /* oath_validate_strcmp_function for use by
