@@ -12,6 +12,9 @@ Completed/usable:
 
 Project roadmap:
 
+- SASL mechanism, for example, CROTP:
+   http://tools.ietf.org/html/draft-josefsson-kitten-crotp-00
+
 - finalise and document client-server protocol for use on the TCP socket
 
 - Adapt a PHP OpenID sample to utilise dynalogind by
