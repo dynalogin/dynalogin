@@ -16,7 +16,7 @@ AM_LDFLAGS = -lapr-1
 
 bin_PROGRAMS = dynalogin_tester
 dynalogin_tester_SOURCES = dynalogin_tester.c
-dynalogin_tester_LDADD = libdynalogin/libdynalogin.la
+dynalogin_tester_LDADD = libdynalogin/libdynalogin.la -lapr-1 -loath
 
 
 
