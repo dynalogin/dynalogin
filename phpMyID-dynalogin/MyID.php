@@ -265,7 +265,7 @@ function authorize_mode () {
 			$digest_suffix = implode(':', array($hdr['nonce'], $hdr['nc'], $hdr['cnonce'], $hdr['qop'], $a2));
 
 			// successful login?
-			if(dynalogin_auth($hdr['username'], $profile['auth_realm'], $hdr['response'], $digest_suffix, $profile['dynalogin_host'], $profile['dynalogin_port']) == 1) {
+			if(dynalogin_auth_digest($hdr['username'], $profile['auth_realm'], $hdr['response'], $digest_suffix, $profile['dynalogin_host'], $profile['dynalogin_port']) == 1) {
 				debug('Authentication successful');
 				debug('User session is: ' . session_id());
 				$_SESSION['auth_username'] = $hdr['username'];

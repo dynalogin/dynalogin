@@ -21,7 +21,7 @@ function dynalogin_read($sock) {
   return FALSE;
 }
 
-function dynalogin_auth($user, $realm, $response, $digest_suffix,
+function dynalogin_auth_digest($user, $realm, $response, $digest_suffix,
     $server, $port) {
 
   $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
