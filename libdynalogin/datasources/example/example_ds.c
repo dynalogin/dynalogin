@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <syslog.h>
 
 #include <apr_hash.h>
 
@@ -28,7 +29,7 @@ static dynalogin_user_data_t u_tester =
 
 static dynalogin_result_t init(apr_pool_t *pool, apr_hash_t *config)
 {
-	fprintf(stderr, "test_ds: init\n");
+	syslog(LOG_NOTICE, "test_ds: init");
 }
 
 static void done(void)
@@ -44,7 +45,7 @@ static void user_fetch(dynalogin_user_data_t **ud,
 	else
 		*ud = (dynalogin_user_data_t *)NULL;
 
-	fprintf(stderr, "user = %s, count = %d\n", userid, u_tester.counter);
+	syslog(LOG_DEBUG, "user = %s, count = %d", userid, u_tester.counter);
 	return;
 }
 

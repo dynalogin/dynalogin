@@ -23,6 +23,7 @@
 
 #include <apr_hash.h>
 #include <apr_pools.h>
+#include <apr_strings.h>
 
 #include "dynalogin-datastore.h"
 
@@ -369,7 +370,7 @@ apr_status_t odbc_build_connection(odbc_connection_t **c, apr_pool_t *pool)
 	ret = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &(_c->env));
 	if(!SQL_SUCCEEDED(ret))
 	{
-		fprintf(stderr, "Failed query\n");
+		syslog(LOG_ERR, "Failed query");
 		extract_error("SQLAllocHandle", NULL, SQL_NULL_HANDLE, _pool);
 		return APR_EGENERAL;
 	}
@@ -378,7 +379,7 @@ apr_status_t odbc_build_connection(odbc_connection_t **c, apr_pool_t *pool)
 	ret = SQLSetEnvAttr(_c->env, SQL_ATTR_ODBC_VERSION, (void *) SQL_OV_ODBC3, 0);
 	if(!SQL_SUCCEEDED(ret))
 	{
-		fprintf(stderr, "Failed query\n");
+		syslog(LOG_ERR, "Failed query");
 		extract_error("SQLSetEnvAttr", _c->env, SQL_HANDLE_ENV, _pool);
 		SQLFreeHandle(SQL_HANDLE_ENV, _c->env);
 		return APR_EGENERAL;
@@ -388,7 +389,7 @@ apr_status_t odbc_build_connection(odbc_connection_t **c, apr_pool_t *pool)
 	ret = SQLAllocHandle(SQL_HANDLE_DBC, _c->env, &(_c->dbc));
 	if(!SQL_SUCCEEDED(ret))
 	{
-		fprintf(stderr, "Failed query\n");
+		syslog(LOG_ERR, "Failed query");
 		extract_error("SQLAllocHandle", _c->env, SQL_HANDLE_ENV, _pool);
 		SQLFreeHandle(SQL_HANDLE_ENV, _c->env);
 		return APR_EGENERAL;
@@ -400,7 +401,7 @@ apr_status_t odbc_build_connection(odbc_connection_t **c, apr_pool_t *pool)
 			SQL_DRIVER_COMPLETE);
 	if(!SQL_SUCCEEDED(ret))
 	{
-		fprintf(stderr, "Failed query\n");
+		syslog(LOG_ERR, "Failed query");
 		extract_error("SQLDriverConnect", _c->dbc, SQL_HANDLE_DBC, _pool);
 		SQLFreeHandle(SQL_HANDLE_DBC, _c->dbc);
 		SQLFreeHandle(SQL_HANDLE_ENV, _c->env);
@@ -482,16 +483,16 @@ static void user_fetch(dynalogin_user_data_t **ud, const dynalogin_userid_t user
 			odbc_get_string(&(_ud->last_code), c->query_stmt, 9, pool);
 			odbc_get_string(&(_ud->password), c->query_stmt, 10, pool);
 
-			fprintf(stderr, "got user %s count %ju\n", _ud->userid, _ud->counter);
+			syslog(LOG_DEBUG, "got user %s count %ju", _ud->userid, _ud->counter);
 		}
 		else
 		{
-			fprintf(stderr, "apr_pcalloc failed\n");
+			syslog(LOG_ERR, "apr_pcalloc failed");
 			odbc_cleanup(c);
 			return ;
 		}
 	} else if(ret == SQL_NO_DATA) {
-		fprintf(stderr, "no row found\n");
+		syslog(LOG_INFO, "no row found for user: ", userid);
 		odbc_cleanup(c);
 		return;
 	} else {
@@ -503,7 +504,7 @@ static void user_fetch(dynalogin_user_data_t **ud, const dynalogin_userid_t user
 
 	*ud = _ud;
 
-	fprintf(stderr, "user = %s, count = %ju\n", userid, _ud->counter);
+	syslog(LOG_DEBUG, "user = %s, count = %ju", userid, _ud->counter);
 	return;
 }
 
@@ -584,7 +585,7 @@ static void user_update(dynalogin_user_data_t *ud, apr_pool_t *pool)
 	odbc_cleanup(c);
 
 	apr_pool_destroy(_pool);
-	fprintf(stderr, "UPDATED user = %s, count = %ju\n", ud->userid, ud->counter);
+	syslog(LOG_DEBUG, "UPDATED user = %s, count = %ju", ud->userid, ud->counter);
 	return;
 }
 

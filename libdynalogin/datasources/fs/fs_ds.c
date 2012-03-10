@@ -44,7 +44,7 @@ typedef struct fs_user_t {
 
 static dynalogin_result_t init(apr_pool_t *pool, apr_hash_t *config)
 {
-	fprintf(stderr, "fs_ds: init\n");
+	syslog(LOG_INFO, "fs_ds: init");
 }
 
 static void done(void)
@@ -201,7 +201,7 @@ apr_status_t store_users(apr_array_header_t *users,
 				u[i].counter, u[i].failure_count, u[i].locked,
 				u[i].last_success, u[i].last_attempt,
 				u[i].last_code);
-		fprintf(stderr, "writing: %s\n", s);
+		syslog(LOG_DEBUG, "writing: %s", s);
 
 		if((res=apr_file_puts(s, f))!=APR_SUCCESS)
 		{
@@ -239,7 +239,7 @@ static void user_fetch(dynalogin_user_data_t **ud, const dynalogin_userid_t user
 	if(_ud != NULL)
 	{
 		*ud = _ud;
-		fprintf(stderr, "user = %s, count = %d\n", userid, (*ud)->counter);
+		syslog(LOG_DEBUG, "user = %s, count = %d", userid, (*ud)->counter);
 	}
 	return;
 }
@@ -270,7 +270,7 @@ static void user_update(dynalogin_user_data_t *ud, apr_pool_t *pool)
 	if(_ud != NULL)
 	{
 		_ud->counter = ud->counter;
-		fprintf(stderr, "user = %s, count = %d\n", _ud->userid, _ud->counter);
+		syslog(LOG_DEBUG, "user = %s, count = %d", _ud->userid, _ud->counter);
 		if((res=store_users(users, FS_DB, pool))!=APR_SUCCESS)
 		{
 			syslog(LOG_ERR, "unexpected result while writing users file: %s",

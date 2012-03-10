@@ -34,7 +34,7 @@
 	if((r = (char *)apr_hash_get(m, s, APR_HASH_KEY_STRING)) == NULL) \
 		{ syslog(LOG_ERR, "missing parameter %s", s); return DYNALOGIN_ERROR; }
 
-#define ERRMSG(s) fprintf(stderr, "%s\n", s)
+#define ERRMSG(s) syslog(LOG_ERR, s)
 
 struct oath_callback_pvt_t
 {
@@ -83,7 +83,7 @@ dynalogin_result_t dynalogin_init(dynalogin_session_t **session,
 		return DYNALOGIN_ERROR;
 	h->pool = pool;
 
-	fprintf(stderr, "looking in %s for modules\n", PKGLIBDIR);
+	syslog(LOG_DEBUG, "looking in %s for modules", PKGLIBDIR);
 
 	GET_STRING_PARAM(ds_module_name, config, DYNALOGIN_PARAM_DSNAME)
 
@@ -159,15 +159,13 @@ dynalogin_result_t dynalogin_authenticate
 	h->datasource->user_fetch(&ud, userid, h->pool);
 	if(ud == NULL)
 	{
-		ERRMSG("userid not found");
-		fprintf(stderr, "userid was %s\n", userid);
+		syslog(LOG_ERR, "userid not found: %s", userid);
 		return DYNALOGIN_DENY;
 	}
 
 	if(ud->locked != 0)
 	{
-		ERRMSG("account locked");
-		fprintf(stderr, "account locked: %s\n", userid);
+		syslog(LOG_ERR, "account locked: %s", userid);
 		return DYNALOGIN_DENY;
 	}
 
@@ -222,15 +220,13 @@ dynalogin_result_t dynalogin_authenticate_digest
 	h->datasource->user_fetch(&ud, userid, h->pool);
 	if(ud == NULL)
 	{
-		ERRMSG("userid not found");
-		fprintf(stderr, "userid was %s\n", userid);
+		syslog(LOG_ERR, "userid not found: %s", userid);
 		return DYNALOGIN_DENY;
 	}
 
 	if(ud->locked != 0)
 	{
-		ERRMSG("account locked");
-		fprintf(stderr, "account locked: %s\n", userid);
+		syslog(LOG_ERR, "account locked: %s", userid);
 		return DYNALOGIN_DENY;
 	}
 
