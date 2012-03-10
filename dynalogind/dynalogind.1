@@ -1,0 +1,20 @@
+.TH DYNALOGIND "1" "March 2012" "dynalogind" "dynalogin"
+.SH NAME
+dynalogin \- manual page for dynalogin server daemon
+.SH SYNOPSIS
+.B dynalogind
+[\fIOPTIONS\fR]...
+.SH DESCRIPTION
+The dynalogin server daemon (dynalogin) listens on a TCP port
+(default localhost:9050) and processes HOTP validation requests.
+When a user is validated successfully, it updates the counter
+that must be retained as part of the HOTP algorithm.  Credentials
+and algorithm data (such as the counter value) are kept in persistent
+storage using one of the modular storage backends (for example, flat
+file or UNIXODBC).
+.SH AUTHOR
+Daniel Pocock <daniel@pocock.com.au>
+.SH "REPORTING BUGS"
+See http://www.dynalogin.org
+.SH COPYRIGHT
+Copyright (C) 2010 Daniel Pocock - licenced under the terms of GPL v3
