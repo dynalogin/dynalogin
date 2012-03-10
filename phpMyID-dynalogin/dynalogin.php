@@ -21,6 +21,35 @@ function dynalogin_read($sock) {
   return FALSE;
 }
 
+function dynalogin_auth($user, $code, $server, $port) {
+
+  $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+  socket_connect($sock, $server, $port);
+
+  // read greeting
+  $greeting_code = dynalogin_read($sock);
+
+  if($greeting_code == 220) {
+    // send auth request
+    $request = "UDATA HOTP $user $code\n";
+    socket_write($sock, $request);
+
+    // check response
+    $response_code = dynalogin_read($sock);
+    if($response_code == 250)
+      $logged_in = 1;
+    else
+      $logged_in = 0;
+  } else {
+    // bad greeting
+    echo "bad greeting";
+  }
+
+  // quit
+//  socket_close($sock);
+  return $logged_in;
+}
+
 function dynalogin_auth_digest($user, $realm, $response, $digest_suffix,
     $server, $port) {
 
