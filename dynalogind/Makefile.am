@@ -17,5 +17,5 @@ sbin_PROGRAMS = dynalogind
 dynalogind_SOURCES = dynalogind.c
 dynalogind_LDADD = ../libdynalogin/libdynalogin.la -lapr-1 -loath
 
-
+man1_MANS = dynalogind.1
 
