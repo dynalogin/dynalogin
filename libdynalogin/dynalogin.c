@@ -164,6 +164,13 @@ dynalogin_result_t dynalogin_authenticate
 		return DYNALOGIN_DENY;
 	}
 
+	if(ud->locked != 0)
+	{
+		ERRMSG("account locked");
+		fprintf(stderr, "account locked: %s\n", userid);
+		return DYNALOGIN_DENY;
+	}
+
 	pvt.code = code;
 	pvt.password = ud->password;
 
@@ -217,6 +224,13 @@ dynalogin_result_t dynalogin_authenticate_digest
 	{
 		ERRMSG("userid not found");
 		fprintf(stderr, "userid was %s\n", userid);
+		return DYNALOGIN_DENY;
+	}
+
+	if(ud->locked != 0)
+	{
+		ERRMSG("account locked");
+		fprintf(stderr, "account locked: %s\n", userid);
 		return DYNALOGIN_DENY;
 	}
 
