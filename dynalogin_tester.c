@@ -8,8 +8,9 @@
 
 #include "dynalogin.h"
 
+#define MY_DS "example_ds"
 /* #define MY_DS "fs_ds" */
-#define MY_DS "odbc_ds"
+/* #define MY_DS "odbc_ds" */
 
 #define MAX_CODE 32
 

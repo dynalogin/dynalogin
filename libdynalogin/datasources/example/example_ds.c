@@ -15,8 +15,9 @@ extern dynalogin_datastore_module_t example_ds_module;
 
 static dynalogin_user_data_t u_tester =
 {
-		"test2",  // name
+		"testuser",  // name
 		"abc123", // secret
+		// "12345678901234567890", // secret from RFC 4226 test vector
 		0, // counter
 		0, // failure_count
 		0, // locked
@@ -51,6 +52,7 @@ static void user_fetch(dynalogin_user_data_t **ud,
 
 static void user_update(dynalogin_user_data_t *ud, apr_pool_t *pool)
 {
+	syslog(LOG_DEBUG, "updated data: user = %s, count = %d", ud->userid, ud->counter);
 	return;
 }
 
