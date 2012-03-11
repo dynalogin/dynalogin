@@ -22,12 +22,27 @@
 #define DEFAULT_CONFIG_FILENAME "dynalogind.conf"
 #define DIR_SEP '/'
 
+#define DEFAULT_BIND_ADDR "0.0.0.0"
+#define DEFAULT_BIND_PORT 9050
+
 #define DYNALOGIND_PARAM_DETACH "dynalogind.detach"
+#define DYNALOGIND_PARAM_BIND_ADDR "dynalogind.bind_addr"
+#define DYNALOGIND_PARAM_BIND_PORT "dynalogind.bind_port"
 
 #define GET_INT_PARAM(r, m, s) \
         if(apr_hash_get(m, s, APR_HASH_KEY_STRING) == NULL) \
                 { syslog(LOG_ERR, "missing parameter %s", s); exit(-1); } \
 	r = atoi(apr_hash_get(m, s, APR_HASH_KEY_STRING));
+#define GET_INT_PARAM_DEF(r, m, s, d) \
+	if(apr_hash_get(m, s, APR_HASH_KEY_STRING) == NULL) \
+		r = d; \
+	else \
+		r = atoi(apr_hash_get(m, s, APR_HASH_KEY_STRING));
+#define GET_STRING_PARAM_DEF(r, m, s, d) \
+	if(apr_hash_get(m, s, APR_HASH_KEY_STRING) == NULL) \
+                r = d; \
+        else \
+		r = apr_hash_get(m, s, APR_HASH_KEY_STRING);
 
 typedef struct socket_thread_data_t {
 	apr_pool_t *pool;
@@ -379,8 +394,8 @@ int main(int argc, char *argv[])
 	apr_socket_t *socket, *socket_new;
 
 	char *cfg_filename;
-	char *bind_address = "127.0.0.1";
-	int bind_port = 9050;
+	char *bind_address;
+	int bind_port;
 	int qlen = 32;
 	int cfg_detach = 1;
 
@@ -447,6 +462,8 @@ int main(int argc, char *argv[])
 				apr_strerror(res, errbuf, ERRBUFLEN));
 		return 1;
 	}
+	GET_STRING_PARAM_DEF(bind_address, config, DYNALOGIND_PARAM_BIND_ADDR, DEFAULT_BIND_ADDR)
+	GET_INT_PARAM_DEF(bind_port, config, DYNALOGIND_PARAM_BIND_PORT, DEFAULT_BIND_PORT)
 	if((res=apr_sockaddr_info_get(&sa, bind_address, APR_UNSPEC,
 			bind_port, APR_IPV4_ADDR_OK || APR_IPV6_ADDR_OK, pool))!=APR_SUCCESS)
 	{
