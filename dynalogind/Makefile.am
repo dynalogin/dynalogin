@@ -15,7 +15,7 @@ AM_LDFLAGS = -lapr-1
 
 sbin_PROGRAMS = dynalogind
 dynalogind_SOURCES = dynalogind.c
-dynalogind_LDADD = ../libdynalogin/libdynalogin.la -lapr-1 -loath
+dynalogind_LDADD = ../libdynalogin/libdynalogin.la -lapr-1
 
 man1_MANS = dynalogind.1
 

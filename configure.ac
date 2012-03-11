@@ -20,6 +20,8 @@ AC_PROG_INSTALL
 
 AC_PROG_LIBTOOL
 
+PKG_CHECK_MODULES([DEPS_LIBDYNALOGIN], [liboath >= 1.10.2 apr-1 >= 1.4.2])
+
 AC_OUTPUT(
 	Makefile
 	libdynalogin/Makefile
