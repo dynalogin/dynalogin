@@ -294,6 +294,10 @@ dynalogin_result_t dynalogin_read_config_from_file(apr_hash_t **config,
 		if(len > 0 && buf[len-1]=='\n')
 			buf[--len] = 0;
 
+		/* Lines starting with ; or # are comments, ignore them */
+		if(buf[0] == ';' || buf[0] == '#')
+			continue;
+
 		for(i = 0; i < len && buf[i] != '='; i++);
 
 		if(buf[i] == '=' && i > 0)
