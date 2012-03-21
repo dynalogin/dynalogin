@@ -1,0 +1,24 @@
+dynalogin on Debian
+-------------------
+
+  This is the initial packaging of dynalogin for Debian.
+
+  The administrator must create the database manually (if database is
+  used) and configure the UNIX ODBC properties files in /etc
+
+  => see /usr/share/doc/libdynalogin0/odbc for schema and sample ODBC ini file
+
+  For example,
+
+    apt-get install unixodbc-dev libmyodbc mysql-server
+
+  and then follow all the steps in odbc/README.mysql
+
+  Config location, by default, is /etc/dynalogind.conf
+
+  Debian is the primary development and test platform for dynalogin
+
+  Please see the web page and wiki for more detailed documentation:
+
+    http://www.dynalogin.org
+

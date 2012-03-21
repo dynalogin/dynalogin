@@ -1,0 +1,24 @@
+#!/usr/bin/make -f
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/autotools.mk
+
+CFLAGS = `apr-1-config --cflags --includes` -I/usr/include/liboath
+
+DEB_DH_STRIP_ARGS =
+DEB_MAKE_CHECK_TARGET = VERBOSE=t check
+
+install/libdynalogin0::
+	mkdir -p debian/libdynalogin0/usr/share/doc/libdynalogin0/odbc
+	cp libdynalogin/datasources/odbc/*sample debian/libdynalogin0/usr/share/doc/libdynalogin0/odbc
+	cp libdynalogin/datasources/odbc/README* debian/libdynalogin0/usr/share/doc/libdynalogin0/odbc
+	cp libdynalogin/datasources/odbc/schema* debian/libdynalogin0/usr/share/doc/libdynalogin0/odbc
+
+install/dynalogin-client-php::
+	mkdir -p debian/dynalogin-client-php/usr/share/dynalogin-client-php
+	cp php/dynalogin.php debian/dynalogin-client-php/usr/share/dynalogin-client-php
+
+install/dynalogin-server::
+	mkdir -p debian/dynalogin-server/etc
+	cp debian/dynalogind.conf debian/dynalogin-server/etc
+
