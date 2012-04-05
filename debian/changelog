@@ -1,5 +1,5 @@
-dynalogin (0.9.11-1) unstable; urgency=low
+dynalogin (0.9.11-2) unstable; urgency=low
 
-  * Initial packaging.
+  * Initial packaging. (Closes: #665831).
 
  -- Daniel Pocock <daniel@pocock.com.au>  Sat, 10 Mar 2012 10:30:00 +0100
