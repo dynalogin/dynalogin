@@ -1,2 +1,3 @@
-extend-diff-ignore = "(^|/)contrib/*"
-extend-diff-ignore = "Makefile.in"
+extend-diff-ignore = "^contrib/"
+extend-diff-ignore = "Makefile.in$"
+extend-diff-ignore = "cdbs-config_list$"
