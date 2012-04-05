@@ -17,5 +17,6 @@ sbin_PROGRAMS = dynalogind
 dynalogind_SOURCES = dynalogind.c
 dynalogind_LDADD = ../libdynalogin/libdynalogin.la -lapr-1
 
-man1_MANS = dynalogind.1
+man_MANS = dynalogind.1
+EXTRA_DIST = $(man_MANS)
 

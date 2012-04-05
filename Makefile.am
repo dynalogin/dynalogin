@@ -2,6 +2,7 @@ AUTOMAKE_OPTIONS = foreign dist-tarZ
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = doc \
+	digest.sh \
 	m4/gnulib-tool.m4 m4/gnulib-cache.m4 \
 	php \
 	phpMyID-dynalogin
