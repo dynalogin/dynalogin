@@ -45,7 +45,7 @@ Description: dynalogin - two-factor HOTP authentication - server daemon
 
 Package: dynalogin-client-php
 Section: web
-Architecture: any
+Architecture: all
 Description: dynalogin - two-factor HOTP authentication - PHP authentication
  dynalogin is a two-factor authentication framework based on the HOTP
  (Open Authentication) algorithm.  Dynalogin can store credentials in 
