@@ -2,9 +2,9 @@ Source: dynalogin
 Section: admin
 Priority: optional
 Maintainer: Daniel Pocock <daniel@pocock.com.au>
-Build-Depends: cdbs, debhelper (>= 7.0.0), libapr1-dev, liboath-dev, unixodbc-dev
+Build-Depends: cdbs, debhelper (>= 8.0.0), libapr1-dev, liboath-dev, unixodbc-dev
 Homepage: http://www.dynalogin.org/
-Standards-Version: 3.9.2
+Standards-Version: 3.9.3
 DM-Upload-Allowed: yes
 
 Package: libdynalogin-1-0
@@ -46,6 +46,7 @@ Description: dynalogin - two-factor HOTP authentication - server daemon
 Package: dynalogin-client-php
 Section: web
 Architecture: all
+Depends: ${misc:Depends}
 Description: dynalogin - two-factor HOTP authentication - PHP authentication
  dynalogin is a two-factor authentication framework based on the HOTP
  (Open Authentication) algorithm.  Dynalogin can store credentials in 
