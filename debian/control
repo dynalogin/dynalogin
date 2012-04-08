@@ -27,7 +27,6 @@ Description: dynalogin - two-factor HOTP authentication - implementation libs
  and UNIXODBC) for retaining the user credentials and algorithm data.
  
 Package: dynalogin-server
-Section: admin
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: dynalogin - two-factor HOTP authentication - server daemon
