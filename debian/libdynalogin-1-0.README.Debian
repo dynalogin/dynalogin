@@ -1,0 +1,9 @@
+dynalogin on Debian
+-------------------
+
+This package contains the library implementing the server-side
+functionality.
+
+For server documentation, please see documents installed under:
+
+   /usr/share/doc/dynalogin-server/
