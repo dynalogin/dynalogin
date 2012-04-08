@@ -64,7 +64,7 @@ Description: dynalogin - two-factor HOTP authentication - PHP authentication
 Package: simpleid-store-dynalogin
 Section: web
 Architecture: all
-Depends: ${misc:Depends}, simpleid
+Depends: ${misc:Depends}, simpleid, dynalogin-client-php
 Description: dynalogin - two-factor HOTP authentication - OpenID provider
  dynalogin is a two-factor authentication framework based on the HOTP
  (Open Authentication) algorithm.  Dynalogin can store credentials in
