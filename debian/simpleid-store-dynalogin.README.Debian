@@ -1,0 +1,31 @@
+
+
+Quickstart
+----------
+
+This package should have installed all the files in the right places
+
+You just need to edit your server hostname/port in:
+
+   /etc/simpleid/dynalogin-filesystem.store.config.php
+
+and create/edit your user identities.
+
+A sample dynalogin identity file is located in:
+
+   /usr/share/simpleid/sample/example-dynalogin.identity.dist
+
+It should be copied to:
+
+   /var/lib/simpleid/identities/<USERID>.identity
+
+and then modified to suit your requirements.  In particular, you must
+set these new parameters for each user who exists in dynalogin:
+
+  auth_method="DYNALOGIN"
+  dynalogin_user="whatever"   
+
+where the `dynalogin_user' value should match the username stored
+in the dynalogin database (for example, if you want to log in
+as `daniel', but your dynalogin database expects `daniel@example.org')
+
