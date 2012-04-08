@@ -1,4 +1,4 @@
 simpleid/example-dynalogin.identity.dist usr/share/simpleid/sample
-simpleid/dynalogin-filesystem.store.php usr/share/simpleid/www
+simpleid/dynalogin-filesystem.store.inc usr/share/simpleid/www
 simpleid/dynalogin-filesystem.store.config.php etc/simpleid
 simpleid/README.txt usr/share/doc/simpleid-store-dynalogin
