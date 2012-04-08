@@ -3,7 +3,7 @@
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/autotools.mk
 
-CFLAGS = `apr-1-config --cflags --includes` -I/usr/include/liboath
+CFLAGS = `apr-1-config --cflags --cppflags --includes` -I/usr/include/liboath
 
 DEB_DH_STRIP_ARGS =
 DEB_MAKE_CHECK_TARGET = VERBOSE=t check
