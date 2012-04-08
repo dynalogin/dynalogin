@@ -12,7 +12,9 @@ dynalogin on Debian
 
     apt-get install unixodbc-dev libmyodbc mysql-server
 
-  and then follow all the steps in odbc/README.mysql
+  and then follow all the steps in 
+
+    /usr/share/doc/libdynalogin-1-0/odbc/README.mysql
 
   Config location, by default, is /etc/dynalogind.conf
 
