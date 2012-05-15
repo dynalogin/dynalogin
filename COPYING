@@ -6,7 +6,8 @@ Version:             all
 Copyright owner:     Daniel Pocock <daniel@pocock.com.au>
 
 Code from third parties:
-                     libdynalogin/lib/* from gnulib (GPL)
+                     libdynalogin/lib/* from gnulib (LGPL v2 or later)
+                     Copyright (C) 1998-2006 Free Software Foundation, Inc.
 
 License:             GNU Public License v3 (full license below)
 
