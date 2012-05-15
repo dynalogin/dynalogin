@@ -8,7 +8,6 @@ License:             GNU Public License v3 (full license below)
 Copyright owner:     Daniel Pocock <daniel@pocock.com.au>
 
 Code from third parties:
-                     libdynalogin/hotp.* from the hotp-toolkit (GNU LGPL v2.1)
                      libdynalogin/lib/* from gnulib (GPL)
 
 -------------------------------------------------------------------------
