@@ -5,11 +5,9 @@ EXTRA_DIST = doc \
 	digest.sh \
 	m4/gnulib-tool.m4 m4/gnulib-cache.m4 \
 	php \
-	simpleid \
-	phpMyID-dynalogin
+	simpleid
 dist-hook:
 	rm -rf `find $(distdir)/doc -name .svn`
-	rm -rf `find $(distdir)/phpMyID-dynalogin -name .svn`
 
 SUBDIRS = libdynalogin dynalogind
 
