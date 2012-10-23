@@ -41,6 +41,12 @@ Architecture:
 - dynaloginapp
     a webapp offering the features of an OpenID provider with dynalogin
 
+Further reading:
 
+  To build from source, see BUILD.txt
 
+  To experiment with and test the server, see TESTING.txt
 
+  To learn more about back-end data source configuration, see
+     libdynalogin/datasources/*/
+  as there is an individual document for each data source.

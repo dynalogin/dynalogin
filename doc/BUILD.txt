@@ -60,6 +60,8 @@
   Note that oathtool expects the secret key in hexadecimal (not ASCII),
   while dynalogin processes keys in ASCII format.
 
+  For further comments on testing, see TESTING.txt
+
 6. install
 
     make install
