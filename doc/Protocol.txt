@@ -88,6 +88,8 @@ S: 250 OK
 Scenario 2: Server challenges the client
 ----------------------------------------
 
+  NOTE: Not yet implemented in dynalogin
+
 DRAFT: this is for discussion only - OCRA is still a draft
 
 If the server wishes to challenge the client:
@@ -103,6 +105,8 @@ S: 250 OK
 
 Scenario 3: Mutual challenge
 ----------------------------
+
+  NOTE: Not yet implemented in dynalogin
 
 DRAFT: this is for discussion only - OCRA is still a draft
 
