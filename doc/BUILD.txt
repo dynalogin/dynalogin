@@ -6,31 +6,39 @@
 
 1. Obtain code from git
 
+    mkdir -p ~/ws
+    git clone git://github.com/dynalogin/dynalogin.git ~/ws/dynalogin
+
 2. autotools setup
 
-  autoreconf --install
-  #autoconf -f && autoheader && automake
-  #autoreconf -f --install && autoheader && automake
+    autoreconf --install
+
+  and in some circumstances, you may need to run:
+
+    autoreconf -f --install
 
 3. configure the source tree for compiling:
 
   Use the supplied configure script, some examples of how to invoke it:
 
-  ./configure --enable-shared
-  ./configure CFLAGS="-I /usr/include/apr-1.0"
-  ./configure --enable-shared CFLAGS="-I/usr/include/apr-1.0 -I/usr/include/liboath -g"
+    ./configure --enable-shared
+    ./configure CFLAGS="-I /usr/include/apr-1.0"
+    ./configure --enable-shared \
+       CFLAGS="-I/usr/include/apr-1.0 -I/usr/include/liboath -g"
 
   possible alternative for 32 bit build:
 
-  ./configure --enable-shared CFLAGS="-I/usr/include/apr-1.0 -I/usr/include/liboath -D_LARGEFILE64_SOURCE -g" --prefix=/usr/local 
+    ./configure --enable-shared \
+       CFLAGS="-I/usr/include/apr-1.0 -I/usr/include/liboath -D_LARGEFILE64_SOURCE -g" \
+       --prefix=/usr/local
 
 4. build the code:
 
-  make
+    make
 
 5. test
 
-  ./dynalogin_tester testuser
+    ./dynalogin_tester testuser
 
   dynalogin_tester can test against any datasource (modify dynalogin_tester.c
   to choose one of the other datasources, they are commented out)
@@ -54,5 +62,5 @@
 
 6. install
 
-  make install
+    make install
  
