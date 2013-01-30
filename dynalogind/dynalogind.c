@@ -50,7 +50,7 @@ typedef struct socket_thread_data_t {
 	dynalogin_session_t *dynalogin_session;
 } socket_thread_data_t;
 
-apr_status_t read_line(apr_pool_t *pool, apr_socket_t *socket,
+apr_status_t read_line(apr_pool_t *pool, socket_thread_data_t *td,
 		char **buf, apr_size_t bufsize)
 {
 	char errbuf[ERRBUFLEN + 1];
@@ -66,7 +66,7 @@ apr_status_t read_line(apr_pool_t *pool, apr_socket_t *socket,
 	}
 	_buf = *buf;
 
-	res = apr_socket_recv(socket, _buf, &readsize);
+	res = apr_socket_recv(td->socket, _buf, &readsize);
 
 	if(res == APR_SUCCESS || res == APR_EOF)
 	{
@@ -82,7 +82,7 @@ apr_status_t read_line(apr_pool_t *pool, apr_socket_t *socket,
 	return res;
 }
 
-apr_status_t send_answer(apr_socket_t *socket, const char *answer)
+apr_status_t send_answer(socket_thread_data_t *td, const char *answer)
 {
 	apr_size_t msglen;
 	apr_size_t sent;
@@ -93,7 +93,7 @@ apr_status_t send_answer(apr_socket_t *socket, const char *answer)
 	while(total_sent < msglen)
 	{
 		sent = msglen;
-		res = apr_socket_send(socket, answer + total_sent, &sent);
+		res = apr_socket_send(td->socket, answer + total_sent, &sent);
 		if(res != APR_SUCCESS)
 			return res;
 		total_sent += sent;
@@ -101,24 +101,24 @@ apr_status_t send_answer(apr_socket_t *socket, const char *answer)
 	return APR_SUCCESS;
 }
 
-apr_status_t send_result(apr_socket_t *socket, int code)
+apr_status_t send_result(socket_thread_data_t *td, int code)
 {
 	switch(code)
 	{
 	case 220:
-		return send_answer(socket, "220 Service ready\n");
+		return send_answer(td, "220 Service ready\n");
 		break;
         case 221:
-		return send_answer(socket, "221 Closing connection\n");
+		return send_answer(td, "221 Closing connection\n");
                 break;
 	case 250:
-		return send_answer(socket, "250 OK\n");
+		return send_answer(td, "250 OK\n");
 		break;
 	case 401:
-		return send_answer(socket, "401 Unauthorized\n");
+		return send_answer(td, "401 Unauthorized\n");
 		break;
 	case 500:
-		return send_answer(socket, "500 Error\n");
+		return send_answer(td, "500 Error\n");
                 break;
 	default:
 		return APR_EINVAL;
@@ -166,14 +166,14 @@ void socket_thread_handle(socket_thread_data_t *td)
 		return;
 	}
 
-	if(send_result(td->socket, 220)!=APR_SUCCESS)
+	if(send_result(td, 220)!=APR_SUCCESS)
 	{
 		syslog(LOG_ERR, "failed to send greeting");
 		return;
 	}
 
 	readsize = bufsize;
-	res = read_line(query_pool, td->socket, &buf, bufsize);
+	res = read_line(query_pool, td, &buf, bufsize);
 	while(res == APR_SUCCESS || res == APR_EOF)
 	{
 		if((res=apr_tokenize_to_argv(buf, &argv, query_pool))
@@ -189,11 +189,11 @@ void socket_thread_handle(socket_thread_data_t *td)
 		if(ntokens < 1)
 		{
 			syslog(LOG_WARNING, "insufficient tokens in query");
-                        res = send_result(td->socket, 500);
+                        res = send_result(td, 500);
 		}
 		else if(strcasecmp(argv[0], "QUIT")==0)
 		{
-			send_result(td->socket, 221);
+			send_result(td, 221);
 			return;
 		}
                 else if(strcasecmp(argv[0], "UDATA")==0)
@@ -204,7 +204,7 @@ void socket_thread_handle(socket_thread_data_t *td)
 			{
                                 /* Command too short */
                                 syslog(LOG_WARNING, "insufficient tokens in query");
-                                res = send_result(td->socket, 500);
+                                res = send_result(td, 500);
 			}
 			else if(strcasecmp(selected_mode, "HOTP")==0)
 			{
@@ -214,7 +214,7 @@ void socket_thread_handle(socket_thread_data_t *td)
 				{
 					/* Command too short */
 					syslog(LOG_WARNING, "insufficient tokens in query");
-					res = send_result(td->socket, 500);
+					res = send_result(td, 500);
 				}
 				else
 				{
@@ -226,21 +226,21 @@ void socket_thread_handle(socket_thread_data_t *td)
 					{
 					case DYNALOGIN_SUCCESS:
 						syslog(LOG_DEBUG, "DYNALOGIN success for user=%s", userid);
-						res = send_result(td->socket, 250);
+						res = send_result(td, 250);
 						break;
 					case DYNALOGIN_DENY:
 						/* User unknown or bad password */
 						syslog(LOG_DEBUG, "DYNALOGIN denied for user=%s", userid);
-						res = send_result(td->socket, 401);
+						res = send_result(td, 401);
 						break;
 					case DYNALOGIN_ERROR:
 						/* Error connecting to DB, etc */
 						syslog(LOG_DEBUG, "DYNALOGIN error for user=%s", userid);
-						res = send_result(td->socket, 500);
+						res = send_result(td, 500);
 						break;
 					default:
 						syslog(LOG_DEBUG, "DYNALOGIN unexpected result for user=%s", userid);
-						res = send_result(td->socket, 500);
+						res = send_result(td, 500);
 					}
 				}
 			} else if (strcasecmp(selected_mode, "HOTP-DIGEST")==0)
@@ -254,7 +254,7 @@ void socket_thread_handle(socket_thread_data_t *td)
 				{
 					/* Command too short */
 					syslog(LOG_WARNING, "insufficient tokens in query");
-					res = send_result(td->socket, 500);
+					res = send_result(td, 500);
 				}
 				else
 				{
@@ -266,32 +266,32 @@ void socket_thread_handle(socket_thread_data_t *td)
 					{
 					case DYNALOGIN_SUCCESS:
 						syslog(LOG_DEBUG, "DYNALOGIN success for user=%s", userid);
-						res = send_result(td->socket, 250);
+						res = send_result(td, 250);
 						break;
 					case DYNALOGIN_DENY:
 						/* User unknown or bad password */
 						syslog(LOG_DEBUG, "DYNALOGIN denied for user=%s", userid);
-						res = send_result(td->socket, 401);
+						res = send_result(td, 401);
 						break;
 					case DYNALOGIN_ERROR:
 						/* Error connecting to DB, etc */
 						syslog(LOG_DEBUG, "DYNALOGIN error for user=%s", userid);
-						res = send_result(td->socket, 500);
+						res = send_result(td, 500);
 						break;
 					default:
 						syslog(LOG_DEBUG, "DYNALOGIN unexpected result for user=%s", userid);
-						res = send_result(td->socket, 500);
+						res = send_result(td, 500);
 					}
 				}
 			} else {
 				syslog(LOG_WARNING, "unsupported mode requested");
-                        	res = send_result(td->socket, 500);
+                        	res = send_result(td, 500);
 			}
 		}
 		else
 		{
 			/* Unrecognised command */
-			res = send_result(td->socket, 500);
+			res = send_result(td, 500);
 		}
 	
 		if(res != APR_SUCCESS)
@@ -308,7 +308,7 @@ void socket_thread_handle(socket_thread_data_t *td)
 							apr_strerror(res, errbuf, ERRBUFLEN));
 			return;
 		}
-		res = read_line(query_pool, td->socket, &buf, bufsize);
+		res = read_line(query_pool, td, &buf, bufsize);
 	}
 	syslog(LOG_ERR, "failed to read input from socket: %s",
 					apr_strerror(res, errbuf, ERRBUFLEN));
