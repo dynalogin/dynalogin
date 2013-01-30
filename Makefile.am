@@ -11,15 +11,11 @@ dist-hook:
 
 SUBDIRS = libdynalogin dynalogind
 
-AM_CFLAGS = -DSYSCONFDIR='"$(sysconfdir)"' -DPKGLIBDIR='"$(pkglibdir)"'
-AM_CFLAGS += -I$(srcdir)/libdynalogin 
-#-I$(builddir)/lib +=
-
-AM_LDFLAGS = -lapr-1
-
 bin_PROGRAMS = dynalogin_tester
 dynalogin_tester_SOURCES = dynalogin_tester.c
-dynalogin_tester_LDADD = libdynalogin/libdynalogin.la -lapr-1 -loath
-
-
+dynalogin_tester_CFLAGS = -DSYSCONFDIR='"$(sysconfdir)"' -DPKGLIBDIR='"$(pkglibdir)"'
+dynalogin_tester_CFLAGS += -I$(srcdir)/libdynalogin
+dynalogin_tester_CFLAGS += $(DEPS_DYNALOGIND_CFLAGS)
+dynalogin_tester_LDADD = libdynalogin/libdynalogin.la
+dynalogin_tester_LDADD += $(DEPS_DYNALOGIND_LIBS)
 
