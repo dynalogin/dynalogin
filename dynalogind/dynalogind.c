@@ -3,6 +3,7 @@
  *
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -15,6 +16,8 @@
 #include <apr_strings.h>
 #include <apr_thread_proc.h>
 
+#include <gnutls/gnutls.h>
+
 #include "dynalogin.h"
 
 #define ERRBUFLEN 1024
@@ -26,6 +29,8 @@
 #define DEFAULT_BIND_PORT 9050
 
 #define DYNALOGIND_PARAM_DETACH "dynalogind.detach"
+#define DYNALOGIND_PARAM_TLS_CERT "dynalogind.tls_cert"
+#define DYNALOGIND_PARAM_TLS_KEY "dynalogind.tls_key"
 #define DYNALOGIND_PARAM_BIND_ADDR "dynalogind.bind_addr"
 #define DYNALOGIND_PARAM_BIND_PORT "dynalogind.bind_port"
 
@@ -44,11 +49,27 @@
         else \
 		r = apr_hash_get(m, s, APR_HASH_KEY_STRING);
 
+gnutls_certificate_credentials_t x509_cred;
+gnutls_priority_t priority_cache;
+char *tls_cert = NULL;
+char *tls_key = NULL;
+static gnutls_dh_params_t dh_params;
+
 typedef struct socket_thread_data_t {
 	apr_pool_t *pool;
 	apr_socket_t *socket;
+	gnutls_session_t *tls_session;
 	dynalogin_session_t *dynalogin_session;
 } socket_thread_data_t;
+
+/* This is not part of the public API of APR, but
+ * we have it here because GNUTLS needs the
+ * underlying socket descriptor.
+ */
+typedef struct apr_socket_t {
+    apr_pool_t *pool;
+    int socketdes;
+} apr_socket_t;
 
 apr_status_t read_line(apr_pool_t *pool, socket_thread_data_t *td,
 		char **buf, apr_size_t bufsize)
@@ -57,6 +78,7 @@ apr_status_t read_line(apr_pool_t *pool, socket_thread_data_t *td,
 	apr_status_t res;
 	char *_buf;
 	apr_size_t readsize = bufsize, i;
+	int ret;
 
 	if((*buf = apr_pcalloc(pool, bufsize))==NULL)
 	{
@@ -66,18 +88,45 @@ apr_status_t read_line(apr_pool_t *pool, socket_thread_data_t *td,
 	}
 	_buf = *buf;
 
-	res = apr_socket_recv(td->socket, _buf, &readsize);
-
-	if(res == APR_SUCCESS || res == APR_EOF)
+	if(td->tls_session == NULL)
 	{
-		_buf[readsize] = 0;
-		for(i = 0; i < readsize; i++)
-			if(_buf[i] == '\r' || _buf[i] == '\n')
-				_buf[i] = 0;
+		res = apr_socket_recv(td->socket, _buf, &readsize);
+
+		if(res == APR_SUCCESS || res == APR_EOF)
+		{
+			_buf[readsize] = 0;
+			for(i = 0; i < readsize; i++)
+				if(_buf[i] == '\r' || _buf[i] == '\n')
+					_buf[i] = 0;
+		}
+		else
+			syslog(LOG_ERR, "unexpected result while reading socket: %s",
+				apr_strerror(res, errbuf, ERRBUFLEN));
 	}
 	else
-		syslog(LOG_ERR, "unexpected result while reading socket: %s",
-				apr_strerror(res, errbuf, ERRBUFLEN));
+	{
+		ret = gnutls_record_recv (*(td->tls_session), _buf, bufsize);
+		if (ret == 0)
+		{
+			// Connection has been closed by peer
+			_buf[0] = 0;
+			res = APR_EOF;
+		}
+		else if (ret < 0)
+		{
+			syslog(LOG_ERR, "received corrupted "
+					"data(GNUTLS error code = %d). Closing the connection", ret);
+			res = APR_EGENERAL;
+		}
+		else if (ret > 0)
+		{
+			_buf[ret] = 0;
+			for(i = 0; i < ret; i++)
+				if(_buf[i] == '\r' || _buf[i] == '\n')
+					_buf[i] = 0;
+			res = APR_SUCCESS;
+		}
+	}
 
 	return res;
 }
@@ -90,13 +139,20 @@ apr_status_t send_answer(socket_thread_data_t *td, const char *answer)
 	apr_status_t res;
 
 	msglen = strlen(answer);
-	while(total_sent < msglen)
+	if(td->tls_session == NULL)
 	{
-		sent = msglen;
-		res = apr_socket_send(td->socket, answer + total_sent, &sent);
-		if(res != APR_SUCCESS)
-			return res;
-		total_sent += sent;
+		while(total_sent < msglen)
+		{
+			sent = msglen;
+			res = apr_socket_send(td->socket, answer + total_sent, &sent);
+			if(res != APR_SUCCESS)
+				return res;
+			total_sent += sent;
+		}
+	}
+	else
+	{
+		gnutls_record_send (*(td->tls_session), answer, msglen);
 	}
 	return APR_SUCCESS;
 }
@@ -123,6 +179,40 @@ apr_status_t send_result(socket_thread_data_t *td, int code)
 	default:
 		return APR_EINVAL;
 	}
+}
+
+static int
+generate_dh_params (void)
+{
+  int bits = gnutls_sec_param_to_pk_bits (GNUTLS_PK_DH, GNUTLS_SEC_PARAM_LOW);
+
+  /* Generate Diffie-Hellman parameters - for use with DHE
+   * kx algorithms. When short bit length is used, it might
+   * be wise to regenerate parameters often.
+   */
+  gnutls_dh_params_init (&dh_params);
+  gnutls_dh_params_generate2 (dh_params, bits);
+
+  return 0;
+}
+
+static gnutls_session_t
+initialize_tls_session (void)
+{
+  gnutls_session_t session;
+
+  gnutls_init (&session, GNUTLS_SERVER);
+
+  gnutls_priority_set (session, priority_cache);
+
+  gnutls_credentials_set (session, GNUTLS_CRD_CERTIFICATE, x509_cred);
+
+  /* We don't request any certificate from the client.
+   * If we did we would need to verify it.
+   */
+  gnutls_certificate_server_set_request (session, GNUTLS_CERT_IGNORE);
+
+  return session;
 }
 
 int count_pointers(char **argv)
@@ -316,11 +406,47 @@ void socket_thread_handle(socket_thread_data_t *td)
 
 void socket_thread_main(apr_thread_t *self, void *data)
 {
+	int ret = 0;
 	socket_thread_data_t *thread_data = (socket_thread_data_t*)data;
+	gnutls_session_t session;
 
-	socket_thread_handle(thread_data);
+	if(tls_cert != NULL)
+	{
+		if((thread_data->tls_session=apr_pcalloc(
+				thread_data->pool, sizeof(gnutls_session_t)))!=NULL)
+		{
+			session = initialize_tls_session ();
+			gnutls_transport_set_ptr (session,
+					(gnutls_transport_ptr_t) (thread_data->socket->socketdes));
+			do
+			{
+				ret = gnutls_handshake (session);
+			}
+			while (ret < 0 && gnutls_error_is_fatal (ret) == 0);
+
+			if (ret < 0)
+			{
+				syslog(LOG_ERR, "handshake has failed (%s)\n\n", gnutls_strerror (ret));
+			}
+			*(thread_data->tls_session) = session;
+		}
+		else
+		{
+			syslog(LOG_ERR, "memory allocation failure");
+			ret = -1;
+		}
+	}
+
+	if(ret >= 0)
+	{
+		socket_thread_handle(thread_data);
+		if(thread_data->tls_session != NULL)
+			gnutls_bye(session, GNUTLS_SHUT_WR);
+	}
 
 	apr_socket_close(thread_data->socket);
+	if(thread_data->tls_session != NULL)
+		gnutls_deinit (session);
 	apr_pool_destroy(thread_data->pool);
 	syslog(LOG_INFO, "client connection closed");
 }
@@ -366,6 +492,7 @@ apr_status_t handle_new_client(apr_socket_t *socket, apr_pool_t *pool,
 
 	thread_data->pool = subpool;
 	thread_data->socket = socket;
+	thread_data->tls_session = NULL;  // to be populated later if using TLS
 	thread_data->dynalogin_session = h;
 
 	res = apr_thread_create(&t, t_attr,
@@ -398,6 +525,7 @@ int main(int argc, char *argv[])
 	int bind_port;
 	int qlen = 32;
 	int cfg_detach = 1;
+	int ret;
 
 	int done = 0;
 
@@ -421,7 +549,10 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	cfg_filename = apr_psprintf(pool, "%s%c%s",
+	if(argc == 2)
+		cfg_filename = argv[1];
+	else
+		cfg_filename = apr_psprintf(pool, "%s%c%s",
 			SYSCONFDIR, DIR_SEP, DEFAULT_CONFIG_FILENAME);
 	if(cfg_filename == NULL)
 	{
@@ -484,6 +615,50 @@ int main(int argc, char *argv[])
 		syslog(LOG_ERR, "failed to bind: %s",
 				apr_strerror(res, errbuf, ERRBUFLEN));
 		apr_socket_close(socket);
+		return 1;
+	}
+
+	GET_STRING_PARAM_DEF(tls_cert, config, DYNALOGIND_PARAM_TLS_CERT, NULL)
+	GET_STRING_PARAM_DEF(tls_key, config, DYNALOGIND_PARAM_TLS_KEY, NULL)
+	if(tls_cert != NULL)
+	{
+		if(tls_key == NULL)
+		{
+			syslog(LOG_ERR, "%s specified, but %s not specified", DYNALOGIND_PARAM_TLS_CERT,
+					DYNALOGIND_PARAM_TLS_KEY);
+			return 1;
+		}
+
+		gnutls_global_init ();
+
+		gnutls_certificate_allocate_credentials (&x509_cred);
+		/* gnutls_certificate_set_x509_system_trust(xcred); */
+		/* gnutls_certificate_set_verify_flags (x509_cred,
+		                                       GNUTLS_VERIFY_ALLOW_SIGN_RSA_MD5); */
+		/* gnutls_certificate_set_x509_trust_file (x509_cred, "/etc/ssl/certs/ca-certificates.txt",
+				GNUTLS_X509_FMT_PEM); */
+
+		/* gnutls_certificate_set_x509_crl_file (x509_cred, "/tmp/crl.pem",
+				GNUTLS_X509_FMT_PEM); */
+
+		ret = gnutls_certificate_set_x509_key_file (x509_cred, tls_cert, tls_key,
+				GNUTLS_X509_FMT_PEM);
+		if (ret < 0)
+		{
+			syslog(LOG_ERR, "No certificate or key were found");
+			return 1;
+		}
+
+		generate_dh_params ();
+
+		gnutls_priority_init (&priority_cache, "PERFORMANCE:%SERVER_PRECEDENCE", NULL);
+
+		gnutls_certificate_set_dh_params (x509_cred, dh_params);
+	}
+	else if(tls_key == NULL)
+	{
+		syslog(LOG_ERR, "%s specified, but %s not specified", DYNALOGIND_PARAM_TLS_KEY,
+				DYNALOGIND_PARAM_TLS_CERT);
 		return 1;
 	}
 
