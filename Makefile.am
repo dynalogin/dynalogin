@@ -10,6 +10,8 @@ dist-hook:
 	rm -rf `find $(distdir)/doc -name .svn`
 
 SUBDIRS = libdynalogin dynalogind
+SUBDIRS += libdynaloginclient
+SUBDIRS += pam_dynalogin
 
 bin_PROGRAMS = dynalogin_tester
 dynalogin_tester_SOURCES = dynalogin_tester.c

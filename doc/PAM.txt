@@ -1,0 +1,19 @@
+
+Installing the PAM module
+
+After installing the module with make install, it may be
+necessary to take some of the following steps:
+
+Create a symlink:
+
+  ln -s /opt/dynalogin/lib/security/pam_dynalogin.so /lib/security/
+
+Add the module into /etc/pam.d/<some file>, e.g test with /etc/pam.d/su:
+
+  auth requisite pam_dynalogin.so debug server=srv1.office.readytechnology.co.uk port=9050
+
+It may be necessary to update PAM on some platforms:
+
+  pam-auth-update --force
+
+

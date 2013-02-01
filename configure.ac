@@ -22,6 +22,9 @@ AC_PROG_LIBTOOL
 
 PKG_CHECK_MODULES([DEPS_LIBDYNALOGIN], [liboath >= 1.10.2 apr-1 >= 1.4.2])
 PKG_CHECK_MODULES([DEPS_DYNALOGIND], [apr-1 >= 1.4.2 gnutls >= 2.12])
+PKG_CHECK_MODULES([DEPS_LIBDYNALOGINCLIENT], [gnutls >= 2.8])
+
+AC_CHECK_HEADERS_ONCE([security/pam_appl.h])
 
 AC_OUTPUT(
 	Makefile
@@ -32,5 +35,7 @@ AC_OUTPUT(
 	libdynalogin/datasources/odbc/Makefile
 	libdynalogin/lib/Makefile
 	dynalogind/Makefile
+	libdynaloginclient/Makefile
+	pam_dynalogin/Makefile
 	)
 
