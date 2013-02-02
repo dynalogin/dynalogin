@@ -24,7 +24,12 @@ PKG_CHECK_MODULES([DEPS_LIBDYNALOGIN], [liboath >= 1.10.2 apr-1 >= 1.4.2])
 PKG_CHECK_MODULES([DEPS_DYNALOGIND], [apr-1 >= 1.4.2 gnutls >= 2.12])
 PKG_CHECK_MODULES([DEPS_LIBDYNALOGINCLIENT], [gnutls >= 2.8])
 
-AC_CHECK_HEADERS_ONCE([security/pam_appl.h])
+AC_CHECK_HEADERS([security/pam_appl.h], [],
+  [AC_MSG_ERROR([[PAM header files not found, install libpam-dev.]])])
+AC_CHECK_HEADERS([security/pam_modules.h security/_pam_macros.h], [], [],
+  [#include <security/pam_appl.h>])
+
+AC_CHECK_LIB(pam, pam_get_item)
 
 AC_OUTPUT(
 	Makefile
