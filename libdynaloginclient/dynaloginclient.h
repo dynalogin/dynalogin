@@ -18,7 +18,7 @@ typedef struct dynalogin_client_t {
 	char *read_buf_offset;
 } dynalogin_client_t;
 
-dynalogin_client_t *dynalogin_session_start(const char *server, int port);
+dynalogin_client_t *dynalogin_session_start(const char *server, int port, const char *ca_file);
 void dynalogin_session_stop(dynalogin_client_t *session);
 
 int dynalogin_authenticate_hotp(dynalogin_client_t *session, const char *user, const char *code);

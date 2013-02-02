@@ -10,7 +10,7 @@ Create a symlink:
 
 Add the module into /etc/pam.d/<some file>, e.g test with /etc/pam.d/su:
 
-  auth requisite pam_dynalogin.so debug server=srv1.office.readytechnology.co.uk port=9050
+  auth requisite pam_dynalogin.so debug server=srv1.office.readytechnology.co.uk port=9050 ca_file=/etc/ssl/certs/cacert.org.pem
 
 It may be necessary to update PAM on some platforms:
 
