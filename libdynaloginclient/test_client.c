@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 	user = argv[3];
 	code = argv[4];
 
-	session = dynalogin_session_start(host, port);
+	session = dynalogin_session_start(host, port, NULL);
 
 	if(session == NULL)
 	{
