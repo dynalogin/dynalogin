@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <strings.h>
 #include <syslog.h>
+#include <time.h>
 
 #include <apr_dso.h>
 #include <apr_file_io.h>
@@ -24,7 +25,15 @@
 #define DIR_SEPARATOR '/'
 
 #define HOTP_WINDOW 20
-#define HOTP_DIGEST_DIGITS 6
+#define HOTP_DIGITS 6
+
+/* In seconds */
+#define TOTP_STEP_SIZE_X 30
+/* Offset from UNIX time 0, in seconds */
+#define TOTP_OFFSET_T0 0
+#define TOTP_DIGITS 6
+/* the TOTP_WINDOW is multiples of TOTP_STEP_SIZE_X */
+#define TOTP_WINDOW 2
 
 #define CFG_LINEBUF_LEN 512
 
@@ -35,6 +44,8 @@
 		{ syslog(LOG_ERR, "missing parameter %s", s); return DYNALOGIN_ERROR; }
 
 #define ERRMSG(s) syslog(LOG_ERR, s)
+
+const char *scheme_names[] = { "HOTP", "TOTP", NULL };
 
 struct oath_callback_pvt_t
 {
@@ -146,12 +157,15 @@ int oath_callback(void *handle, const char *test_otp) {
 
 dynalogin_result_t dynalogin_authenticate
 	(dynalogin_session_t *h, const dynalogin_userid_t userid,
-			const dynalogin_code_t code)
+			dynalogin_scheme_t scheme, const dynalogin_code_t code)
 {
 	int rc;
 	dynalogin_user_data_t *ud;
 	dynalogin_result_t res;
 	struct oath_callback_pvt_t pvt;
+	time_t now;
+	dynalogin_counter_t _now, next_counter;
+	int fail_inc = 1;
 
 	if(h == NULL || userid == NULL || code == NULL)
 		return DYNALOGIN_ERROR;
@@ -160,6 +174,13 @@ dynalogin_result_t dynalogin_authenticate
 	if(ud == NULL)
 	{
 		syslog(LOG_ERR, "userid not found: %s", userid);
+		return DYNALOGIN_DENY;
+	}
+
+	if(ud->scheme != scheme)
+	{
+		syslog(LOG_ERR, "scheme mismatch for user %s (expected %s)",
+				userid, get_scheme_name(ud->scheme));
 		return DYNALOGIN_DENY;
 	}
 
@@ -177,22 +198,53 @@ dynalogin_result_t dynalogin_authenticate
 		return DYNALOGIN_ERROR;
 	}
 
-	rc = oath_hotp_validate_callback (
-			ud->secret,
-			strlen(ud->secret),
-			ud->counter,
-			HOTP_WINDOW, HOTP_DIGEST_DIGITS,
-			oath_callback,
-			&pvt);
+	switch(scheme)
+	{
+	case HOTP:
+		rc = oath_hotp_validate_callback (
+				ud->secret,
+				strlen(ud->secret),
+				ud->counter,
+				HOTP_WINDOW, HOTP_DIGITS,
+				oath_callback,
+				&pvt);
+		next_counter = ud->counter + (rc + 1);
+		break;
+	case TOTP:
+		time(&now);
+		_now = (now - TOTP_OFFSET_T0) / TOTP_STEP_SIZE_X;
+		if(_now >= ud->counter)
+			rc = oath_totp_validate_callback (
+					ud->secret,
+					strlen(ud->secret),
+					now,
+					TOTP_STEP_SIZE_X,
+					TOTP_OFFSET_T0,
+					TOTP_DIGITS,
+					TOTP_WINDOW,
+					oath_callback,
+					&pvt);
+		else
+		{
+			fail_inc = 0;
+			rc = OATH_REPLAYED_OTP;
+		}
+		next_counter = _now + (rc + 1);
+		break;
+	default:
+		syslog(LOG_ERR, "unsupported scheme");
+		fail_inc = 0;
+		rc = -1;
+	}
 	apr_pool_destroy(pvt.pool);
 	if(rc < 0)
 	{
-		ud->failure_count++;
+		ud->failure_count += fail_inc;
 		res = DYNALOGIN_DENY;
 	}
 	else
 	{
-		ud->counter += (rc + 1);
+		ud->counter = next_counter;
 		ud->failure_count = 0;
 		time(&ud->last_success);
 		ud->last_code = code;
@@ -205,6 +257,7 @@ dynalogin_result_t dynalogin_authenticate
 
 dynalogin_result_t dynalogin_authenticate_digest
 	(dynalogin_session_t *h, const dynalogin_userid_t userid,
+			dynalogin_scheme_t scheme,
 			const char *response, const char *realm,
 			const char *digest_suffix)
 {
@@ -212,6 +265,9 @@ dynalogin_result_t dynalogin_authenticate_digest
 	dynalogin_user_data_t *ud;
 	dynalogin_result_t res;
 	struct oath_digest_callback_pvt_t pvt;
+	time_t now;
+	dynalogin_counter_t _now, next_counter;
+	int fail_inc = 1;
 
 	if(h == NULL || userid == NULL || response == NULL ||
 		realm == NULL || digest_suffix == NULL)
@@ -221,6 +277,13 @@ dynalogin_result_t dynalogin_authenticate_digest
 	if(ud == NULL)
 	{
 		syslog(LOG_ERR, "userid not found: %s", userid);
+		return DYNALOGIN_DENY;
+	}
+
+	if(ud->scheme != scheme)
+	{
+		syslog(LOG_ERR, "scheme mismatch for user %s (expected %s)",
+				userid, get_scheme_name(ud->scheme));
 		return DYNALOGIN_DENY;
 	}
 
@@ -241,22 +304,53 @@ dynalogin_result_t dynalogin_authenticate_digest
 		return DYNALOGIN_ERROR;
 	}
 
-	rc = oath_hotp_validate_callback (
-			ud->secret,
-			strlen(ud->secret),
-			ud->counter,
-			HOTP_WINDOW, HOTP_DIGEST_DIGITS,
-			oath_digest_callback,
-			&pvt);
+	switch(scheme)
+	{
+	case HOTP:
+		rc = oath_hotp_validate_callback (
+				ud->secret,
+				strlen(ud->secret),
+				ud->counter,
+				HOTP_WINDOW, HOTP_DIGITS,
+				oath_digest_callback,
+				&pvt);
+		next_counter = ud->counter + (rc + 1);
+		break;
+	case TOTP:
+		time(&now);
+		_now = (now - TOTP_OFFSET_T0) / TOTP_STEP_SIZE_X;
+		if(_now >= ud->counter)
+			rc = oath_totp_validate_callback (
+					ud->secret,
+					strlen(ud->secret),
+					now,
+					TOTP_STEP_SIZE_X,
+					TOTP_OFFSET_T0,
+					TOTP_DIGITS,
+					TOTP_WINDOW,
+					oath_digest_callback,
+					&pvt);
+		else
+		{
+			fail_inc = 0;
+			rc = OATH_REPLAYED_OTP;
+		}
+		next_counter = _now + (rc + 1);
+		break;
+	default:
+		syslog(LOG_ERR, "unsupported scheme");
+		fail_inc = 0;
+		rc = -1;
+	}
 	apr_pool_destroy(pvt.pool);
 	if(rc < 0)
 	{
-		ud->failure_count++;
+		ud->failure_count += fail_inc;
 		res = DYNALOGIN_DENY;
 	}
 	else
 	{
-		ud->counter += (rc + 1);
+		ud->counter = next_counter;
 		ud->failure_count = 0;
 		time(&ud->last_success);
 		ud->last_code = "000000";
@@ -324,3 +418,21 @@ dynalogin_result_t dynalogin_read_config_from_file(apr_hash_t **config,
 	return DYNALOGIN_SUCCESS;
 }
 
+
+dynalogin_scheme_t get_scheme_by_name(const char *scheme_name)
+{
+	int i;
+	for(i = 0; scheme_names[i] != NULL; i++)
+		if(strcmp(scheme_names[i], scheme_name) == 0)
+			return i;
+	return -1;
+}
+
+const char *get_scheme_name(dynalogin_scheme_t scheme)
+{
+	int scheme_count;
+	for(scheme_count = 0; scheme_names[scheme_count] != NULL; scheme_count++)
+		if(scheme == scheme_count)
+			return scheme_names[scheme];
+	return NULL;
+}

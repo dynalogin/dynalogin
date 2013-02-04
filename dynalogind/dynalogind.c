@@ -243,6 +243,7 @@ void socket_thread_handle(socket_thread_data_t *td)
 
 	char *selected_mode;
 	dynalogin_userid_t userid;
+	dynalogin_scheme_t scheme;
 	dynalogin_code_t code;
 
 	char *digest_realm;
@@ -296,9 +297,11 @@ void socket_thread_handle(socket_thread_data_t *td)
                                 syslog(LOG_WARNING, "insufficient tokens in query");
                                 res = send_result(td, 500);
 			}
-			else if(strcasecmp(selected_mode, "HOTP")==0)
+			else if(strcasecmp(selected_mode, "HOTP") == 0 ||
+					strcasecmp(selected_mode, "TOTP") == 0)
 			{
 				userid=argv[2];
+				scheme = selected_mode[0] == 'H' ? HOTP : TOTP;
 				code=argv[3];
 				if(ntokens < 4)
 				{
@@ -310,7 +313,7 @@ void socket_thread_handle(socket_thread_data_t *td)
 				{
 					syslog(LOG_DEBUG, "attempting DYNALOGIN auth for user=%s", userid);
 					dynalogin_res = dynalogin_authenticate(td->dynalogin_session,
-						userid, code);
+						userid, scheme, code);
 
 					switch(dynalogin_res)
 					{
@@ -333,10 +336,12 @@ void socket_thread_handle(socket_thread_data_t *td)
 						res = send_result(td, 500);
 					}
 				}
-			} else if (strcasecmp(selected_mode, "HOTP-DIGEST")==0)
+			} else if (strcasecmp(selected_mode, "HOTP-DIGEST") == 0 ||
+					strcasecmp(selected_mode, "TOTP-DIGEST") == 0)
 			{
 				/* HOTP Digest mode */
 				userid = argv[2];
+				scheme = selected_mode[0] == 'H' ? HOTP : TOTP;
 				digest_realm = argv[3];
 				digest_response = argv[4];
 				digest_suffix = argv[5];
@@ -350,7 +355,7 @@ void socket_thread_handle(socket_thread_data_t *td)
 				{
 					syslog(LOG_DEBUG, "attempting DYNALOGIN digest auth for user=%s", userid);
 					dynalogin_res = dynalogin_authenticate_digest(td->dynalogin_session, 
-						userid, digest_response, digest_realm, digest_suffix);
+						userid, scheme, digest_response, digest_realm, digest_suffix);
 
 					switch(dynalogin_res)
 					{

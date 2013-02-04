@@ -29,7 +29,7 @@
 
 #define DB_DSN "DSN=dynalogin;"
 
-#define DB_SELECT "SELECT id, userid, secret, counter, failure_count, " \
+#define DB_SELECT "SELECT id, userid, scheme, secret, counter, failure_count, " \
 			"locked, last_success, last_attempt, last_code, password " \
 			"FROM dynalogin_user WHERE userid = ?"
 
@@ -448,6 +448,8 @@ static void user_fetch(dynalogin_user_data_t **ud, const dynalogin_userid_t user
 	odbc_connection_t *c;
 	SQLRETURN ret; /* ODBC API return status */
 	SQLLEN indicator;
+	int field;
+	char *scheme_name;
 
 	char *_dsn = DB_DSN;
 
@@ -473,15 +475,18 @@ static void user_fetch(dynalogin_user_data_t **ud, const dynalogin_userid_t user
 	if(SQL_SUCCEEDED(ret = SQLFetch(c->query_stmt))) {
 		if((_ud = apr_pcalloc(pool, sizeof(dynalogin_user_data_t))) != NULL)
 		{
-			odbc_get_string(&(_ud->userid), c->query_stmt, 2, pool);
-			odbc_get_string(&(_ud->secret), c->query_stmt, 3, pool);
-			odbc_get_uint64(&(_ud->counter), c->query_stmt, 4, &indicator);
-			odbc_get_int(&(_ud->failure_count), c->query_stmt, 5, &indicator);
-			odbc_get_int(&(_ud->locked), c->query_stmt, 6, &indicator);
-			odbc_get_datetime(&(_ud->last_success), c->query_stmt, 7, &indicator);
-			odbc_get_datetime(&(_ud->last_attempt), c->query_stmt, 8, &indicator);
-			odbc_get_string(&(_ud->last_code), c->query_stmt, 9, pool);
-			odbc_get_string(&(_ud->password), c->query_stmt, 10, pool);
+			field = 2;
+			odbc_get_string(&(_ud->userid), c->query_stmt, field++, pool);
+			odbc_get_string(&(scheme_name), c->query_stmt, field++, pool);
+			_ud->scheme = get_scheme_by_name(scheme_name);
+			odbc_get_string(&(_ud->secret), c->query_stmt, field++, pool);
+			odbc_get_uint64(&(_ud->counter), c->query_stmt, field++, &indicator);
+			odbc_get_int(&(_ud->failure_count), c->query_stmt, field++, &indicator);
+			odbc_get_int(&(_ud->locked), c->query_stmt, field++, &indicator);
+			odbc_get_datetime(&(_ud->last_success), c->query_stmt, field++, &indicator);
+			odbc_get_datetime(&(_ud->last_attempt), c->query_stmt, field++, &indicator);
+			odbc_get_string(&(_ud->last_code), c->query_stmt, field++, pool);
+			odbc_get_string(&(_ud->password), c->query_stmt, field++, pool);
 
 			syslog(LOG_DEBUG, "got user %s count %ju", _ud->userid, _ud->counter);
 		}

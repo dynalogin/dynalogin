@@ -6,6 +6,7 @@
 CREATE TABLE dynalogin_user (
   id int primary key auto_increment,
   userid varchar(32) not null unique,
+  scheme varchar(16) not null,
   secret varchar(32) not null,
   counter bigint unsigned not null,
   failure_count int not null,

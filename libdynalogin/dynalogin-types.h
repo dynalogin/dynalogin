@@ -19,4 +19,9 @@ typedef enum { DYNALOGIN_SUCCESS,
 	DYNALOGIN_ERROR,
 } dynalogin_result_t;
 
+typedef enum dynalogin_scheme {
+	HOTP = 0,
+	TOTP = 1
+} dynalogin_scheme_t;
+
 #endif /* DYNALOGINTYPES_H_ */

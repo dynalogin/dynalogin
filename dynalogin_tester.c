@@ -17,6 +17,7 @@
 int main(int argc, char *argv[])
 {
 	dynalogin_userid_t userid;
+	dynalogin_scheme_t scheme;
 	char code_buf[MAX_CODE];
 	dynalogin_code_t code = (dynalogin_code_t)code_buf;
 	dynalogin_session_t *h;
@@ -31,12 +32,13 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(argc != 2)
+	if(argc != 3)
 	{
-		fprintf(stderr, "Must specify a user ID\n");
+		fprintf(stderr, "Must specify a user ID and scheme\n");
 		return 1;
 	}
 	userid = (dynalogin_userid_t)argv[1];
+	scheme = get_scheme_by_name(argv[2]);
 
 	if(apr_pool_create(&pool, NULL) != APR_SUCCESS)
 	{
@@ -62,7 +64,7 @@ int main(int argc, char *argv[])
 		scanf("%s", code_buf);
 		printf("\nYou entered code [%s].\n", code_buf);
 
-		res = dynalogin_authenticate(h, userid, code);
+		res = dynalogin_authenticate(h, userid, scheme, code);
 
 		switch(res)
 		{

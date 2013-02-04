@@ -17,6 +17,7 @@
 
 typedef struct dynalogin_user_data {
 	dynalogin_userid_t userid;
+	dynalogin_scheme_t scheme;
 	dynalogin_secret_t secret;
 	dynalogin_counter_t counter;
 	int failure_count;

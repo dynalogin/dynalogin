@@ -2,7 +2,7 @@
  * fs_ds.c
  *
  *  File format:
- *      userid:secret:counter:failure-count:
+ *      userid:scheme:secret:counter:failure-count:
  *          locked:last_success:last_attempt:last_code
  *
  *  Potential improvements:
@@ -33,7 +33,10 @@
 #include <apr_tables.h>
 #include <apr_strings.h>
 
+#include "dynalogin.h"
 #include "dynalogin-datastore.h"
+
+#define FIELD_COUNT 9
 
 extern dynalogin_datastore_module_t fs_ds_module;
 
@@ -85,6 +88,7 @@ apr_status_t parse_user(dynalogin_user_data_t *user_data, const char *user_recor
 	char *p, **_substrings;
 	apr_array_header_t *_substrings_r;
 	apr_status_t res;
+	int field;
 
 	bzero(user_data, sizeof(dynalogin_user_data_t));
 
@@ -96,19 +100,21 @@ apr_status_t parse_user(dynalogin_user_data_t *user_data, const char *user_recor
 			!= APR_SUCCESS)
 		return res;
 
-	if(_substrings_r->nelts != 8)
+	if(_substrings_r->nelts != FIELD_COUNT)
 		return APR_EGENERAL;
 
 	_substrings=(char **)_substrings_r->elts;
 
-	user_data->userid=_substrings[0];
-	user_data->secret=_substrings[1];
-	user_data->counter=atoi(_substrings[2]);
-	user_data->failure_count=atoi(_substrings[3]);
-	user_data->locked=atoi(_substrings[4]);
-	user_data->last_success=atol(_substrings[5]);
-	user_data->last_attempt=atol(_substrings[6]);
-	user_data->last_code=_substrings[7];
+	field = 0;
+	user_data->userid=_substrings[field++];
+	user_data->scheme = get_scheme_by_name(_substrings[field++]);
+	user_data->secret=_substrings[field++];
+	user_data->counter=atoi(_substrings[field++]);
+	user_data->failure_count=atoi(_substrings[field++]);
+	user_data->locked=atoi(_substrings[field++]);
+	user_data->last_success=atol(_substrings[field++]);
+	user_data->last_attempt=atol(_substrings[field++]);
+	user_data->last_code=_substrings[field++];
 }
 
 apr_status_t load_users(apr_array_header_t **users,
@@ -196,8 +202,8 @@ apr_status_t store_users(apr_array_header_t *users,
 			i < users->nelts && u[i].userid != NULL;
 			i++)
 	{
-		s = apr_psprintf(_pool, "%s:%s:%d:%d:%d:%ld:%ld:%s\n",
-				u[i].userid, u[i].secret,
+		s = apr_psprintf(_pool, "%s:%s:%s:%d:%d:%d:%ld:%ld:%s\n",
+				u[i].userid, get_scheme_name(u[i].scheme), u[i].secret,
 				u[i].counter, u[i].failure_count, u[i].locked,
 				u[i].last_success, u[i].last_attempt,
 				u[i].last_code);
