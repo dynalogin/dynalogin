@@ -23,6 +23,8 @@
 #include <string.h>		/* For size_t.t */
 #include <time.h>		/* For time_t. */
 
+#include "dynalogin-internal.h"
+
 struct oath_digest_callback_pvt_t
 {
 	apr_pool_t *pool;

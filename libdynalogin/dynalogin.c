@@ -21,6 +21,7 @@
 #include "dynalogin.h"
 #include "dynalogin-datastore.h"
 #include "hotpdigest.h"
+#include "dynalogin-internal.h"
 
 #define DIR_SEPARATOR '/'
 
@@ -47,12 +48,11 @@
 
 const char *scheme_names[] = { "HOTP", "TOTP", NULL };
 
-struct oath_callback_pvt_t
-{
-	apr_pool_t *pool;
-	const char *code;
-        const char *password;
-};
+dynalogin_result_t dynalogin_authenticate_internal
+	(dynalogin_session_t *h, const dynalogin_userid_t userid,
+			dynalogin_scheme_t scheme,
+			struct oath_callback_pvt_t *pvt,
+			oath_validate_strcmp_function strcmp_otp);
 
 /*
  * Initialise a HOTP authentication stack.
@@ -140,11 +140,12 @@ void dynalogin_done(dynalogin_session_t *h)
 int oath_callback(void *handle, const char *test_otp) {
 	const char *password = "";
 	char *test_str;
+	int result;
 
 	struct oath_callback_pvt_t *pvt =
 		(struct oath_callback_pvt_t *)handle;
 	if(pvt->password != NULL)
-		password = pvt->password;	
+		password = pvt->password;
 
 	if((test_str = apr_pstrcat(pvt->pool,
              password, test_otp, NULL)) == NULL)
@@ -152,22 +153,29 @@ int oath_callback(void *handle, const char *test_otp) {
 		return -1;
 	}
 
-	return strcmp(pvt->code, test_str);
+	result = strcmp((char *)(pvt->extra), test_str);
+	if(result == 0)
+	{
+		pvt->validated_code = apr_pstrdup(pvt->pool, test_otp);
+		return 0;
+	}
+	return 1;
 }
 
-dynalogin_result_t dynalogin_authenticate
+dynalogin_result_t dynalogin_authenticate_internal
 	(dynalogin_session_t *h, const dynalogin_userid_t userid,
-			dynalogin_scheme_t scheme, const dynalogin_code_t code)
+			dynalogin_scheme_t scheme,
+			struct oath_callback_pvt_t *pvt,
+			oath_validate_strcmp_function strcmp_otp)
 {
 	int rc;
 	dynalogin_user_data_t *ud;
 	dynalogin_result_t res;
-	struct oath_callback_pvt_t pvt;
 	time_t now;
 	dynalogin_counter_t _now, next_counter;
 	int fail_inc = 1;
 
-	if(h == NULL || userid == NULL || code == NULL)
+	if(h == NULL || userid == NULL || pvt == NULL)
 		return DYNALOGIN_ERROR;
 
 	h->datasource->user_fetch(&ud, userid, h->pool);
@@ -190,10 +198,9 @@ dynalogin_result_t dynalogin_authenticate
 		return DYNALOGIN_DENY;
 	}
 
-	pvt.code = code;
-	pvt.password = ud->password;
+	pvt->password = ud->password;
 
-	if(apr_pool_create(&(pvt.pool), h->pool) != APR_SUCCESS)
+	if(apr_pool_create(&(pvt->pool), h->pool) != APR_SUCCESS)
 	{
 		return DYNALOGIN_ERROR;
 	}
@@ -206,8 +213,8 @@ dynalogin_result_t dynalogin_authenticate
 				strlen(ud->secret),
 				ud->counter,
 				HOTP_WINDOW, HOTP_DIGITS,
-				oath_callback,
-				&pvt);
+				strcmp_otp,
+				pvt);
 		next_counter = ud->counter + (rc + 1);
 		break;
 	case TOTP:
@@ -222,8 +229,8 @@ dynalogin_result_t dynalogin_authenticate
 					TOTP_OFFSET_T0,
 					TOTP_DIGITS,
 					TOTP_WINDOW,
-					oath_callback,
-					&pvt);
+					strcmp_otp,
+					pvt);
 		else
 		{
 			fail_inc = 0;
@@ -236,7 +243,7 @@ dynalogin_result_t dynalogin_authenticate
 		fail_inc = 0;
 		rc = -1;
 	}
-	apr_pool_destroy(pvt.pool);
+	apr_pool_destroy(pvt->pool);
 	if(rc < 0)
 	{
 		ud->failure_count += fail_inc;
@@ -247,12 +254,30 @@ dynalogin_result_t dynalogin_authenticate
 		ud->counter = next_counter;
 		ud->failure_count = 0;
 		time(&ud->last_success);
-		ud->last_code = code;
+		ud->last_code = pvt->validated_code;
 		res = DYNALOGIN_SUCCESS;
 	}
 	time(&ud->last_attempt);
 	h->datasource->user_update(ud, h->pool);
 	return res;
+}
+
+dynalogin_result_t dynalogin_authenticate
+	(dynalogin_session_t *h, const dynalogin_userid_t userid,
+			dynalogin_scheme_t scheme, const dynalogin_code_t code)
+{
+	struct oath_callback_pvt_t pvt;
+	dynalogin_result_t ret;
+
+	if(code == NULL)
+		return DYNALOGIN_ERROR;
+
+	pvt.extra = code;
+
+	ret = dynalogin_authenticate_internal
+			(h, userid,	scheme, &pvt, oath_callback);
+
+	return ret;
 }
 
 dynalogin_result_t dynalogin_authenticate_digest
@@ -261,106 +286,24 @@ dynalogin_result_t dynalogin_authenticate_digest
 			const char *response, const char *realm,
 			const char *digest_suffix)
 {
-	int rc;
-	dynalogin_user_data_t *ud;
-	dynalogin_result_t res;
-	struct oath_digest_callback_pvt_t pvt;
-	time_t now;
-	dynalogin_counter_t _now, next_counter;
-	int fail_inc = 1;
+	struct oath_callback_pvt_t pvt;
+	struct oath_digest_callback_pvt_t extra;
+	dynalogin_result_t ret;
 
-	if(h == NULL || userid == NULL || response == NULL ||
-		realm == NULL || digest_suffix == NULL)
-		return DYNALOGIN_ERROR;
+	if(response == NULL || realm == NULL || digest_suffix == NULL)
+			return DYNALOGIN_ERROR;
 
-	h->datasource->user_fetch(&ud, userid, h->pool);
-	if(ud == NULL)
-	{
-		syslog(LOG_ERR, "userid not found: %s", userid);
-		return DYNALOGIN_DENY;
-	}
+	extra.response = response;
+	extra.username = userid;
+	extra.realm = realm;
+	extra.digest_suffix = digest_suffix;
+	pvt.extra = &extra;
 
-	if(ud->scheme != scheme)
-	{
-		syslog(LOG_ERR, "scheme mismatch for user %s (expected %s)",
-				userid, get_scheme_name(ud->scheme));
-		return DYNALOGIN_DENY;
-	}
+	ret = dynalogin_authenticate_internal
+			(h, userid,	scheme, &pvt, oath_digest_callback);
 
-	if(ud->locked != 0)
-	{
-		syslog(LOG_ERR, "account locked: %s", userid);
-		return DYNALOGIN_DENY;
-	}
-
-	pvt.response = response;
-	pvt.username = userid;
-	pvt.realm = realm;
-	pvt.digest_suffix = digest_suffix;
-	pvt.password = ud->password;
-
-	if(apr_pool_create(&(pvt.pool), h->pool) != APR_SUCCESS)
-	{
-		return DYNALOGIN_ERROR;
-	}
-
-	switch(scheme)
-	{
-	case HOTP:
-		rc = oath_hotp_validate_callback (
-				ud->secret,
-				strlen(ud->secret),
-				ud->counter,
-				HOTP_WINDOW, HOTP_DIGITS,
-				oath_digest_callback,
-				&pvt);
-		next_counter = ud->counter + (rc + 1);
-		break;
-	case TOTP:
-		time(&now);
-		_now = (now - TOTP_OFFSET_T0) / TOTP_STEP_SIZE_X;
-		if(_now >= ud->counter)
-			rc = oath_totp_validate_callback (
-					ud->secret,
-					strlen(ud->secret),
-					now,
-					TOTP_STEP_SIZE_X,
-					TOTP_OFFSET_T0,
-					TOTP_DIGITS,
-					TOTP_WINDOW,
-					oath_digest_callback,
-					&pvt);
-		else
-		{
-			fail_inc = 0;
-			rc = OATH_REPLAYED_OTP;
-		}
-		next_counter = _now + (rc + 1);
-		break;
-	default:
-		syslog(LOG_ERR, "unsupported scheme");
-		fail_inc = 0;
-		rc = -1;
-	}
-	apr_pool_destroy(pvt.pool);
-	if(rc < 0)
-	{
-		ud->failure_count += fail_inc;
-		res = DYNALOGIN_DENY;
-	}
-	else
-	{
-		ud->counter = next_counter;
-		ud->failure_count = 0;
-		time(&ud->last_success);
-		ud->last_code = "000000";
-		res = DYNALOGIN_SUCCESS;
-	}
-	time(&ud->last_attempt);
-	h->datasource->user_update(ud, h->pool);
-	return res;
+	return ret;
 }
-
 
 dynalogin_result_t dynalogin_read_config_from_file(apr_hash_t **config,
 		const char *filename, apr_pool_t *pool)

@@ -68,17 +68,20 @@ int oath_digest_callback(void *handle, const char *test_otp)
   char *response_arg;   /* H(a1):digest_suffix */
   char _response_raw[GC_MD5_DIGEST_SIZE];
   char _response[(GC_MD5_DIGEST_SIZE * 2) + 1]; /* our calculation of the response */
-  char *password = "";
+  const char *password = "";
 
-  struct oath_digest_callback_pvt_t *pvt =
-    (struct oath_digest_callback_pvt_t *)handle;
+  struct oath_callback_pvt_t *pvt =
+    (struct oath_callback_pvt_t *)handle;
+  struct oath_digest_callback_pvt_t *extra =
+    (struct oath_digest_callback_pvt_t *)(pvt->extra);
+  int result;
 
   if(pvt->password != NULL)
     password = pvt->password;
 
       /* Assemble A1 */
       if((a1 = apr_pstrcat(pvt->pool, 
-             pvt->username, ":", pvt->realm, ":", password, test_otp, NULL)) == NULL)
+             extra->username, ":", extra->realm, ":", password, test_otp, NULL)) == NULL)
         {
           return -1;
         }
@@ -92,7 +95,7 @@ int oath_digest_callback(void *handle, const char *test_otp)
 
       /* Assemble argument for calculating response */
       if((response_arg = apr_pstrcat(pvt->pool,
-            ha1_hex, ":", pvt->digest_suffix, NULL)) == NULL)
+            ha1_hex, ":", extra->digest_suffix, NULL)) == NULL)
         {
           return -1;
         }
@@ -104,7 +107,12 @@ int oath_digest_callback(void *handle, const char *test_otp)
         }
       make_hex_string(_response_raw, _response, GC_MD5_DIGEST_SIZE);
 
-      return strcmp (pvt->response, _response);
-
+      result = strcmp (extra->response, _response);
+      if(result == 0)
+      {
+    	  pvt->validated_code = apr_pstrdup(pvt->pool, test_otp);
+    	  return 0;
+      }
+      return 1;
 }
 
