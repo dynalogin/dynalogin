@@ -152,7 +152,11 @@ apr_status_t send_answer(socket_thread_data_t *td, const char *answer)
 	}
 	else
 	{
-		gnutls_record_send (*(td->tls_session), answer, msglen);
+		if(gnutls_record_send (*(td->tls_session), answer, msglen) < 0)
+		{
+			syslog(LOG_ERR, "gnutls_record_send error");
+			return APR_EGENERAL;
+		}
 	}
 	return APR_SUCCESS;
 }
