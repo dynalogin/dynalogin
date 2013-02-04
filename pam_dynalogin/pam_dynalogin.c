@@ -73,6 +73,7 @@ struct cfg
 	int use_first_pass;
 	char *server;
 	unsigned port;
+	char *ca_file;
 };
 
 static void
@@ -86,6 +87,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->use_first_pass = 0;
 	cfg->server = NULL;
 	cfg->port = -1;
+	cfg->ca_file = NULL;
 
 	for (i = 0; i < argc; i++)
 	{
@@ -101,6 +103,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 			cfg->server = (char *) argv[i] + 7;
 		if (strncmp (argv[i], "port=", 5) == 0)
 			cfg->port = atoi (argv[i] + 5);
+		if (strncmp (argv[i], "ca_file=", 8) == 0)
+			cfg->ca_file = (char *) argv[i] + 8;
 	}
 
 	if (cfg->server == NULL)
@@ -177,7 +181,7 @@ pam_sm_authenticate (pam_handle_t * pamh,
 		goto done;
 	}
 
-	session = dynalogin_session_start(cfg.server, cfg.port);
+	session = dynalogin_session_start(cfg.server, cfg.port, cfg.ca_file);
 	if (session == NULL)
 	{
 		DBG (("dynalogin_session_start() failed"));

@@ -21,8 +21,7 @@
 #define MAX_BUF 1024
 
 // FIXME - should be configurable
-//#define CAFILE "/etc/ssl/certs/ca-certificates.crt"
-#define CAFILE "/etc/ssl/certs/cacert.org.pem"
+#define CA_FILE "/etc/ssl/certs/ca-certificates.crt"
 #define SA struct sockaddr
 
 int
@@ -151,13 +150,14 @@ int dynalogin_authenticate_hotp(dynalogin_client_t *session, const char *user, c
 	return 0;
 }
 
-dynalogin_client_t *dynalogin_session_start(const char *server, int port)
+dynalogin_client_t *dynalogin_session_start(const char *server, int port, const char *ca_file)
 {
 	int ret, ii;
 	char buffer[MAX_BUF + 1];
 	const char *err;
 	char *line;
 	dynalogin_client_t *session;
+        char *_ca_file = ca_file;
 
 	if((session = (dynalogin_client_t*)malloc(sizeof(dynalogin_client_t)))==NULL)
 	{
@@ -181,7 +181,9 @@ dynalogin_client_t *dynalogin_session_start(const char *server, int port)
 
 	/* sets the trusted cas file
 	 */
-	gnutls_certificate_set_x509_trust_file (session->xcred, CAFILE, GNUTLS_X509_FMT_PEM);
+	if(_ca_file == NULL)
+		_ca_file = CA_FILE;
+	gnutls_certificate_set_x509_trust_file (session->xcred, _ca_file, GNUTLS_X509_FMT_PEM);
 	//gnutls_certificate_set_verify_function (session->xcred, _verify_certificate_callback);
 
 	/* If client holds a certificate it can be set using the following:
