@@ -312,12 +312,13 @@ _verify_certificate_callback_new (gnutls_session_t session)
 
 	type = gnutls_certificate_type_get (session);
 
-	ret = gnutls_certificate_verification_status_print( status, type, &out, 0);
+	// FIXME, code commented out to avoid undefined symbol warning
+/*	ret = gnutls_certificate_verification_status_print( status, type, &out, 0);
 	if (ret < 0)
 	{
 		syslog(LOG_ERR, "Error verifying server cert");
 		return GNUTLS_E_CERTIFICATE_ERROR;
-	}
+	} */
 
 	gnutls_free(out.data);
 
