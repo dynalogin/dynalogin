@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	ret = dynalogin_authenticate_hotp(session, user, scheme, code);
+	ret = dynalogin_session_authenticate(session, user, scheme, code);
 
 	printf("return value from OATH: %d\n", ret);
 
