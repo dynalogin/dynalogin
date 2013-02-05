@@ -21,8 +21,7 @@ function dynalogin_read($sock) {
   return FALSE;
 }
 
-function dynalogin_auth($user, $code, $server, $port) {
-
+function dynalogin_try_command($server, $port, $scheme, $use_tls, $command) {
   $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
   socket_connect($sock, $server, $port);
 
@@ -31,8 +30,7 @@ function dynalogin_auth($user, $code, $server, $port) {
 
   if($greeting_code == 220) {
     // send auth request
-    $request = "UDATA HOTP $user $code\n";
-    socket_write($sock, $request);
+    socket_write($sock, $command);
 
     // check response
     $response_code = dynalogin_read($sock);
@@ -48,36 +46,18 @@ function dynalogin_auth($user, $code, $server, $port) {
   // quit
 //  socket_close($sock);
   return $logged_in;
+
+}
+
+function dynalogin_auth($user, $code, $server, $port, $scheme = "HOTP", $use_tls = false) {
+    $request = "UDATA $scheme $user $code\n";
+    return dynalogin_try_command($server, $port, $scheme, $use_tls, $request);
 }
 
 function dynalogin_auth_digest($user, $realm, $response, $digest_suffix,
-    $server, $port) {
-
-  $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-  socket_connect($sock, $server, $port);
-
-  // read greeting
-  $greeting_code = dynalogin_read($sock);
-  
-  if($greeting_code == 220) {
-    // send auth request
-    $request = "UDATA HOTP-DIGEST $user $realm $response $digest_suffix\n";
-    socket_write($sock, $request);
-
-    // check response
-    $response_code = dynalogin_read($sock);
-    if($response_code == 250)
-      $logged_in = 1;
-    else
-      $logged_in = 0;
-  } else {
-    // bad greeting
-    echo "bad greeting";
-  }
-
-  // quit
-//  socket_close($sock);
-  return $logged_in;
+    $server, $port, $scheme = "HOTP", $use_tls = false) {
+    $request = "UDATA ".$scheme."-DIGEST $user $realm $response $digest_suffix\n";
+    return dynalogin_try_command($server, $port, $scheme, $use_tls, $request);
 }
 
 ?>
