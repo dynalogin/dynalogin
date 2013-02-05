@@ -118,13 +118,13 @@ int write_line(dynalogin_client_t *session, const char *msg)
 	return 0;  // FIXME - should check sending status code
 }
 
-int dynalogin_authenticate_hotp(dynalogin_client_t *session, const char *user, const char *code) {
+int dynalogin_session_authenticate(dynalogin_client_t *session, const char *user, const char *scheme, const char *code) {
 
 	char msg[MAX_BUF];
 	char *line;
 	int ret, response_code;
 
-	if(snprintf(msg, MAX_BUF-1, "UDATA HOTP %s %s\n", user, code) >= MAX_BUF)
+	if(snprintf(msg, MAX_BUF-1, "UDATA %s %s %s\n", scheme, user, code) >= MAX_BUF)
 	{
 		syslog(LOG_ERR, "user or code too long for buffer, auth failed");
 		return -1;
@@ -142,11 +142,11 @@ int dynalogin_authenticate_hotp(dynalogin_client_t *session, const char *user, c
 	response_code = atoi(line);
 	free(line);
 	if(response_code < 200 || response_code > 299) {
-		syslog(LOG_ERR, "unexpected response code (%d), auth failed for user %s", response_code, user);
+		syslog(LOG_ERR, "unexpected response code (%d), %s auth failed for user %s", response_code, scheme, user);
 		return -1;
 	}
 
-	syslog(LOG_INFO, "user %s validated successfully, code %d", user, response_code);
+	syslog(LOG_INFO, "user %s validated successfully by %s, code %d", user, scheme, response_code);
 	return 0;
 }
 

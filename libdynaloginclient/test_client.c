@@ -10,20 +10,22 @@ int main(int argc, char *argv[])
 	char *host;
 	int port;
 	char *user;
+	char *scheme;
 	char *code;
 	dynalogin_client_t *session;
 	int ret;
 
-	if(argc < 5)
+	if(argc < 6)
 	{
-		fprintf(stderr, "please specify host, port, user and code");
+		fprintf(stderr, "please specify host, port, user, scheme and code");
 		return 1;
 	}
 
 	host = argv[1];
 	port = atoi(argv[2]);
 	user = argv[3];
-	code = argv[4];
+	scheme = argv[4];
+	code = argv[5];
 
 	session = dynalogin_session_start(host, port, NULL);
 
@@ -33,7 +35,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	ret = dynalogin_authenticate_hotp(session, user, code);
+	ret = dynalogin_authenticate_hotp(session, user, scheme, code);
 
 	printf("return value from OATH: %d\n", ret);
 

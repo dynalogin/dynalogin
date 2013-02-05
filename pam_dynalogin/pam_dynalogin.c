@@ -65,6 +65,8 @@
 #define MIN_OTP_LEN 6
 #define MAX_OTP_LEN 8
 
+const char *schemes[] = { "HOTP", "TOTP", NULL };
+
 struct cfg
 {
 	int debug;
@@ -74,7 +76,18 @@ struct cfg
 	char *server;
 	unsigned port;
 	char *ca_file;
+	const char *scheme;
 };
+
+static const char *
+get_scheme_if_valid(const char *_scheme)
+{
+	const char *p;
+	for(p = schemes[0]; p != NULL; p++)
+		if(strcasecmp(p, _scheme) == 0)
+			return p;
+	return NULL;
+}
 
 static void
 parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
@@ -88,6 +101,7 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 	cfg->server = NULL;
 	cfg->port = -1;
 	cfg->ca_file = NULL;
+	cfg->scheme = schemes[0];
 
 	for (i = 0; i < argc; i++)
 	{
@@ -105,6 +119,8 @@ parse_cfg (int flags, int argc, const char **argv, struct cfg *cfg)
 			cfg->port = atoi (argv[i] + 5);
 		if (strncmp (argv[i], "ca_file=", 8) == 0)
 			cfg->ca_file = (char *) argv[i] + 8;
+		if (strncmp (argv[i], "scheme=", 7) == 0)
+			cfg->scheme = get_scheme_if_valid((char *) argv[i] + 7);
 	}
 
 	if (cfg->server == NULL)
@@ -272,8 +288,8 @@ pam_sm_authenticate (pam_handle_t * pamh,
 	{
 		time_t last_otp;
 
-		rc = dynalogin_authenticate_hotp(
-				session, user, otp);
+		rc = dynalogin_session_authenticate(
+				session, user, cfg.scheme, otp);
 		DBG (("authenticate rc %d", rc));
 	}
 
