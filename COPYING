@@ -8,10 +8,12 @@ Copyright owner:     Daniel Pocock <daniel@pocock.com.au>
 Code from third parties:
                      libdynalogin/lib/* from gnulib (LGPL v2 or later)
                      Copyright (C) 1998-2006 Free Software Foundation, Inc.
+                     pam_dynalogin/* from Simon Josefsson / oath-toolkit
+                     Copyright (C) 2012 Simon Josefsson
 
 License:             GNU Public License v3 (full license below)
 
-    Copyright (C) 2010-2012 Daniel Pocock <daniel@pocock.com.au>
+    Copyright (C) 2010-2013 Daniel Pocock <daniel@pocock.com.au>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
