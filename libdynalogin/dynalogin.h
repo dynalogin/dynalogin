@@ -20,6 +20,15 @@ typedef struct dynalogin_session_t {
 	apr_pool_t *pool;
 	apr_dso_handle_t *dso_handle;
 	dynalogin_datastore_module_t *datasource;
+
+	int hotp_digits;
+	int hotp_window;
+
+	int totp_digits;
+	int totp_window;
+	int totp_x;
+	int totp_t0;
+
 } dynalogin_session_t;
 
 /* Read any system settings, etc */

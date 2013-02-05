@@ -25,21 +25,38 @@
 
 #define DIR_SEPARATOR '/'
 
-#define HOTP_WINDOW 20
-#define HOTP_DIGITS 6
+#define DEFAULT_HOTP_WINDOW 20
+#define DEFAULT_HOTP_DIGITS 6
 
 /* In seconds */
-#define TOTP_STEP_SIZE_X 30
+#define DEFAULT_TOTP_X 30
 /* Offset from UNIX time 0, in seconds */
-#define TOTP_OFFSET_T0 0
-#define TOTP_DIGITS 6
+#define DEFAULT_TOTP_T0 0
+#define DEFAULT_TOTP_DIGITS 6
 /* the TOTP_WINDOW is multiples of TOTP_STEP_SIZE_X */
-#define TOTP_WINDOW 2
+#define DEFAULT_TOTP_WINDOW 2
 
 #define CFG_LINEBUF_LEN 512
 
 #define DYNALOGIN_PARAM_DSNAME "dynalogin.datasource"
 
+#define DYNALOGIN_PARAM_HOTP_DIGITS "dynalogin.hotp.digits"
+#define DYNALOGIN_PARAM_HOTP_WINDOW "dynalogin.hotp.window"
+
+#define DYNALOGIN_PARAM_TOTP_DIGITS "dynalogin.totp.digits"
+#define DYNALOGIN_PARAM_TOTP_WINDOW "dynalogin.totp.window"
+#define DYNALOGIN_PARAM_TOTP_X "dynalogin.totp.X"
+#define DYNALOGIN_PARAM_TOTP_T0 "dynalogin.totp.T0"
+
+#define GET_INT_PARAM(r, m, s) \
+        if(apr_hash_get(m, s, APR_HASH_KEY_STRING) == NULL) \
+                { syslog(LOG_ERR, "missing parameter %s", s); exit(-1); } \
+	r = atoi(apr_hash_get(m, s, APR_HASH_KEY_STRING));
+#define GET_INT_PARAM_DEF(r, m, s, d) \
+	if(apr_hash_get(m, s, APR_HASH_KEY_STRING) == NULL) \
+		r = d; \
+	else \
+		r = atoi(apr_hash_get(m, s, APR_HASH_KEY_STRING));
 #define GET_STRING_PARAM(r, m, s) \
 	if((r = (char *)apr_hash_get(m, s, APR_HASH_KEY_STRING)) == NULL) \
 		{ syslog(LOG_ERR, "missing parameter %s", s); return DYNALOGIN_ERROR; }
@@ -121,6 +138,14 @@ dynalogin_result_t dynalogin_init(dynalogin_session_t **session,
 			apr_dso_unload(h->dso_handle);
 			return DYNALOGIN_ERROR;
 		}
+
+	GET_INT_PARAM_DEF(h->hotp_digits, config, DYNALOGIN_PARAM_HOTP_DIGITS, DEFAULT_HOTP_DIGITS)
+	GET_INT_PARAM_DEF(h->hotp_window, config, DYNALOGIN_PARAM_HOTP_WINDOW, DEFAULT_HOTP_WINDOW)
+
+	GET_INT_PARAM_DEF(h->hotp_digits, config, DYNALOGIN_PARAM_TOTP_DIGITS, DEFAULT_TOTP_DIGITS)
+	GET_INT_PARAM_DEF(h->hotp_window, config, DYNALOGIN_PARAM_TOTP_WINDOW, DEFAULT_TOTP_WINDOW)
+	GET_INT_PARAM_DEF(h->totp_x, config, DYNALOGIN_PARAM_TOTP_X, DEFAULT_TOTP_X)
+	GET_INT_PARAM_DEF(h->totp_t0, config, DYNALOGIN_PARAM_TOTP_T0, DEFAULT_TOTP_T0)
 
 	*session = h;
 
@@ -212,23 +237,23 @@ dynalogin_result_t dynalogin_authenticate_internal
 				ud->secret,
 				strlen(ud->secret),
 				ud->counter,
-				HOTP_WINDOW, HOTP_DIGITS,
+				h->hotp_window, h->hotp_digits,
 				strcmp_otp,
 				pvt);
 		next_counter = ud->counter + (rc + 1);
 		break;
 	case TOTP:
 		time(&now);
-		_now = (now - TOTP_OFFSET_T0) / TOTP_STEP_SIZE_X;
+		_now = (now - h->totp_t0) / h->totp_x;
 		if(_now >= ud->counter)
 			rc = oath_totp_validate_callback (
 					ud->secret,
 					strlen(ud->secret),
 					now,
-					TOTP_STEP_SIZE_X,
-					TOTP_OFFSET_T0,
-					TOTP_DIGITS,
-					TOTP_WINDOW,
+					h->totp_x,
+					h->totp_t0,
+					h->totp_digits,
+					h->totp_window,
 					strcmp_otp,
 					pvt);
 		else
