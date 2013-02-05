@@ -7,6 +7,7 @@
 define('DYNALOGIN_PHP_DIR', '/usr/share/dynalogin-client-php');
 define('DYNALOGIN_SERVER_NAME', 'localhost');
 define('DYNALOGIN_SERVER_PORT', 9050);
-
+define('DYNALOGIN_USE_TLS', false);
+define('DYNALOGIN_DEFAULT_SCHEME, 'HOTP');
 
 ?>

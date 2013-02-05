@@ -48,12 +48,20 @@ identity="http://example.com/"
 ;
 ; Map the simpleID user ID to a user ID within dynalogin
 ;
-; If not specific, the simpleID user ID will be given to dynalogin
+; If not specified, the simpleID user ID will be given to dynalogin
 ;
 ; TODO - automate user mapping with regex, etc
 ;
 ;dynalogin_user="daniel"
 ;dynalogin_user="example@example.org"
+
+;
+; Set the dynalogin / OATH authentication scheme / algorithm
+; Usually HOTP or TOTP
+;
+; Default = HOTP
+;
+;dynalogin_scheme="TOTP"
 
 ;
 ; The password associated with this identity.  

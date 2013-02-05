@@ -217,11 +217,16 @@ function filesystem_user_verify_dynalogin($uid, $test_user, $credentials) {
     if(isset($test_user['dynalogin_user']))
         $dynalogin_user = $test_user['dynalogin_user'];
 
+    $dynalogin_scheme = DYNALOGIN_DEFAULT_SCHEME;
+    if(isset($test_user['dynalogin_scheme']))
+        $dynalogin_scheme = $test_user['dynalogin_scheme'];
+
     if(DYNALOGIN_SERVER_NAME == '' || DYNALOGIN_SERVER_PORT < 0)
         return false;
 
     return (dynalogin_auth($dynalogin_user, $credentials['pass'],
-        DYNALOGIN_SERVER_NAME, DYNALOGIN_SERVER_PORT) == 1);
+        DYNALOGIN_SERVER_NAME, DYNALOGIN_SERVER_PORT,
+        $dynalogin_scheme, DYNALOGIN_USE_TLS) == 1);
 
     return false;
 }
