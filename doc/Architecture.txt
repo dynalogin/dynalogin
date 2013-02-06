@@ -1,0 +1,19 @@
+
+dynalogin is designed to be small, light and efficient.  This is
+important for security code, as it is easier to read and understand.
+
+With this in mind, the following dependencies were chosen as building
+blocks:
+
+- Apache APR: chosen due to the platform-independent flexibility, 
+  convenient memory pools and great support from the APR community.
+
+- oath-toolkit: a self-contained HOTP/TOTP implementation that is
+  well supported by Simon Josefsson
+
+- unixODBC: a flexible way of accessing multiple databases
+
+- gnutls: state-of-the-art TLS support for UNIX, with GNU freedom
+
+- GNU autotools: the most widely used build system for Free software
+  
