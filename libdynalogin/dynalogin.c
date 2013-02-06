@@ -198,7 +198,7 @@ dynalogin_result_t dynalogin_authenticate_internal
 	dynalogin_result_t res;
 	time_t now;
 	dynalogin_counter_t _now, next_counter;
-	int fail_inc = 1;
+	int fail_inc = 1, totp_offset;
 
 	if(h == NULL || userid == NULL || pvt == NULL)
 		return DYNALOGIN_ERROR;
@@ -244,24 +244,31 @@ dynalogin_result_t dynalogin_authenticate_internal
 		break;
 	case TOTP:
 		time(&now);
+		rc = oath_totp_validate2_callback (
+				ud->secret,
+				strlen(ud->secret),
+				now,
+				h->totp_x,
+				h->totp_t0,
+				h->totp_digits,
+				h->totp_window,
+				&totp_offset,
+				strcmp_otp,
+				pvt);
+
+		/* we use totp_offset here because the rc from
+		   oath_totp_validate2_callback is a negative value in case
+		   of error, but negative offsets are valid with TOTP */
 		_now = (now - h->totp_t0) / h->totp_x;
-		if(_now >= ud->counter)
-			rc = oath_totp_validate_callback (
-					ud->secret,
-					strlen(ud->secret),
-					now,
-					h->totp_x,
-					h->totp_t0,
-					h->totp_digits,
-					h->totp_window,
-					strcmp_otp,
-					pvt);
+		if((_now + totp_offset) >= ud->counter)
+		{
+			next_counter = _now + totp_offset + 1;
+		}
 		else
 		{
 			fail_inc = 0;
 			rc = OATH_REPLAYED_OTP;
 		}
-		next_counter = _now + (rc + 1);
 		break;
 	default:
 		syslog(LOG_ERR, "unsupported scheme");
