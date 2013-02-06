@@ -12,6 +12,7 @@
 #include <apr_file_io.h>
 #include <apr_network_io.h>
 #include <apr_pools.h>
+#include <apr_portable.h>
 #include <apr_signal.h>
 #include <apr_strings.h>
 #include <apr_thread_proc.h>
@@ -61,15 +62,6 @@ typedef struct socket_thread_data_t {
 	gnutls_session_t *tls_session;
 	dynalogin_session_t *dynalogin_session;
 } socket_thread_data_t;
-
-/* This is not part of the public API of APR, but
- * we have it here because GNUTLS needs the
- * underlying socket descriptor.
- */
-typedef struct apr_socket_t {
-    apr_pool_t *pool;
-    int socketdes;
-} apr_socket_t;
 
 apr_status_t read_line(apr_pool_t *pool, socket_thread_data_t *td,
 		char **buf, apr_size_t bufsize)
@@ -418,15 +410,21 @@ void socket_thread_main(apr_thread_t *self, void *data)
 	int ret = 0;
 	socket_thread_data_t *thread_data = (socket_thread_data_t*)data;
 	gnutls_session_t session;
+	apr_os_sock_t sock;
 
 	if(tls_cert != NULL)
 	{
-		if((thread_data->tls_session=apr_pcalloc(
+		if(apr_os_sock_get(&sock, thread_data->socket) != APR_SUCCESS)
+		{
+			syslog(LOG_ERR, "Can't get raw socket for TLS use");
+			ret = -1;
+		}
+		else if((thread_data->tls_session=apr_pcalloc(
 				thread_data->pool, sizeof(gnutls_session_t)))!=NULL)
 		{
 			session = initialize_tls_session ();
 			gnutls_transport_set_ptr (session,
-					(gnutls_transport_ptr_t) (thread_data->socket->socketdes));
+					(gnutls_transport_ptr_t) (sock));
 			do
 			{
 				ret = gnutls_handshake (session);
