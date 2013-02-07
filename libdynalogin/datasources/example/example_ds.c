@@ -16,9 +16,8 @@ extern dynalogin_datastore_module_t example_ds_module;
 static dynalogin_user_data_t u_tester =
 {
 		"testuser",  // name
-		TOTP,
-		"abc123", // secret
-		// "12345678901234567890", // secret from RFC 4226 test vector
+		HOTP,        // scheme, can be HOTP or TOTP
+		"12345678901234567890", // secret from RFC 4226 test vector
 		0, // counter
 		0, // failure_count
 		0, // locked
