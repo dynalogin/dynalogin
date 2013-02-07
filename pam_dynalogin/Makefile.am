@@ -1,6 +1,7 @@
 AUTOMAKE_OPTIONS = foreign dist-tarZ
 ACLOCAL_AMFLAGS = -I m4
 
+EXTRA_DIST = README_PAM.txt
 
 pammoddir = $(exec_prefix)/lib/security
 pammod_LTLIBRARIES = pam_dynalogin.la
