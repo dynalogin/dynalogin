@@ -1,11 +1,12 @@
 
-dynalogin
+dynalogin wire protocol
+-----------------------
 
 Background
 ----------
 
 This document describes the communication protocol between
-the dynalogind server process and the client.
+the dynalogind server process and the clients.
 
 Roles
 -----
@@ -29,16 +30,18 @@ Communication mechanism
 -----------------------
 
 Communication between the client and server takes place over a
-stream-orientated connection, such as a TCP session or a UNIX domain
+stream-orientated connection, such as a TCP/TLS session or a UNIX domain
 socket.
 
 The communication mechanism is text based and loosely inspired by
 the SMTP and HTTP protocols.
 
-The communication could be encrypted with SSL but this is not mandatory.
+The RFCs recommend using TLS whenever token codes are transmitted
+on the network.
 
-The default implementation only accepts connections from localhost for
-security reasons.
+The default configuration file for dynalogind only binds to 127.0.0.1
+and does not accept requests from other hosts on the network
+unless this setting is changed.
 
 Greeting
 --------
@@ -83,6 +86,9 @@ S: 401
 E.g:
 
 C: UDATA HOTP user1 123456
+S: 250 OK
+
+C: UDATA TOTP user2 223344
 S: 250 OK
 
 Scenario 2: Server challenges the client
