@@ -7,13 +7,15 @@
 
 #include <config.h>
 
+#include <gnutls/gnutls.h>
+
 #include "oath.h"
 #include "hotpdigest.h"
 
 #include <stdio.h>		/* For snprintf, getline. */
 #include <string.h>		/* For strverscmp. */
 
-#include "gc.h"
+#define DYNALOGIN_MD5_DIGEST_SIZE 16
 
 /**
  * make_hex_string:
@@ -63,11 +65,11 @@ make_hex_string(const char *in, char *out, size_t len)
 int oath_digest_callback(void *handle, const char *test_otp)
 {
   char *a1;  /* username:realm:password */
-  char ha1_raw[GC_MD5_DIGEST_SIZE];  /* H(a1) */
-  char ha1_hex[(GC_MD5_DIGEST_SIZE * 2) + 1];
+  char ha1_raw[DYNALOGIN_MD5_DIGEST_SIZE];  /* H(a1) */
+  char ha1_hex[(DYNALOGIN_MD5_DIGEST_SIZE * 2) + 1];
   char *response_arg;   /* H(a1):digest_suffix */
-  char _response_raw[GC_MD5_DIGEST_SIZE];
-  char _response[(GC_MD5_DIGEST_SIZE * 2) + 1]; /* our calculation of the response */
+  char _response_raw[DYNALOGIN_MD5_DIGEST_SIZE];
+  char _response[(DYNALOGIN_MD5_DIGEST_SIZE * 2) + 1]; /* our calculation of the response */
   const char *password = "";
 
   struct oath_callback_pvt_t *pvt =
@@ -75,6 +77,9 @@ int oath_digest_callback(void *handle, const char *test_otp)
   struct oath_digest_callback_pvt_t *extra =
     (struct oath_digest_callback_pvt_t *)(pvt->extra);
   int result;
+
+  gnutls_datum_t datum;
+  size_t result_size = DYNALOGIN_MD5_DIGEST_SIZE;
 
   if(pvt->password != NULL)
     password = pvt->password;
@@ -87,11 +92,15 @@ int oath_digest_callback(void *handle, const char *test_otp)
         }
 
       /* Calculate H(A1) */
-      if(gc_md5(a1, strlen(a1), ha1_raw) != 0)
+      datum.data = a1;
+      datum.size = strlen(a1);
+      result_size = DYNALOGIN_MD5_DIGEST_SIZE;
+      if(gnutls_fingerprint(GNUTLS_DIG_MD5, &datum, ha1_raw, &result_size)
+          != GNUTLS_E_SUCCESS)
         {
           return -1;
         }
-      make_hex_string(ha1_raw, ha1_hex, GC_MD5_DIGEST_SIZE);
+      make_hex_string(ha1_raw, ha1_hex, DYNALOGIN_MD5_DIGEST_SIZE);
 
       /* Assemble argument for calculating response */
       if((response_arg = apr_pstrcat(pvt->pool,
@@ -101,11 +110,15 @@ int oath_digest_callback(void *handle, const char *test_otp)
         }
 
       /* Calculate response */
-      if(gc_md5(response_arg, strlen(response_arg), _response_raw) != 0)
+      datum.data = response_arg;
+      datum.size = strlen(response_arg);
+      result_size = DYNALOGIN_MD5_DIGEST_SIZE;
+      if(gnutls_fingerprint(GNUTLS_DIG_MD5, &datum, _response_raw, &result_size)
+          != GNUTLS_E_SUCCESS)
         {
           return -1;
         }
-      make_hex_string(_response_raw, _response, GC_MD5_DIGEST_SIZE);
+      make_hex_string(_response_raw, _response, DYNALOGIN_MD5_DIGEST_SIZE);
 
       result = strcmp (extra->response, _response);
       if(result == 0)
