@@ -36,33 +36,7 @@
 
     make
 
-5. test
-
-    ./dynalogin_tester testuser
-
-  dynalogin_tester can test against any datasource (modify dynalogin_tester.c
-  to choose one of the other datasources, they are commented out)
-
-  If it is compiled against the `example_ds' module (the default),
-  then there is one statically configured user:
-
-    user ID:  testuser
-    secret:   abc123
-
-  The first few expected HOTP codes for this user are:
-
-     307799 780164 761834 202441 664978
-
-  You can obtain more codes using the `oathtool' utility, e.g:
-
-    oathtool -w 20 616263313233
-
-  Note that oathtool expects the secret key in hexadecimal (not ASCII),
-  while dynalogin processes keys in ASCII format.
-
-  For further comments on testing, see TESTING.txt
-
-6. install
+5. install
 
     make install
  

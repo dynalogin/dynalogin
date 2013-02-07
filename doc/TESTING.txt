@@ -2,20 +2,51 @@
 
 1. Build the binaries (see BUILD.txt)
 
-2. Create the users file/database
+2. Create the users file/database, or configure dynalogind.conf to
+   use the sample datasource, e.g.
+
+     dynalogin.datasource=example_ds
 
 3. Create a user in the users file/database
    
      - the user's secret should be the same as the secret used
        to initialise the token
 
-4. Run the test application:
+     - if using the sample datasource, there is only one user who
+       is statically defined in the module.  His counter is not
+       persisted to disk and is reset to 0 each time the process
+       is restarted.  The sample user is:
 
-     ./dynalogin_tester username
+       username:  testuser
+       protocol:  HOTP
+       secret:    12345678901234567890
 
-5. Generate a HOTP code from the token
+       (this shared secret is the sample from RFC 4226)
 
-6. Enter the HOTP code into the tester
+4. Run the test application (does not rely on dynalogind.conf, defaults
+   to using example_ds as described above):
+
+     ./dynalogin_tester <username> <scheme> 
+
+   e.g.
+
+     ./dynalogin_tester testuser TOTP
+
+5. Generate a code from the token or using the oathtool test utility
+
+   Here is an example of running oathtool to generate token codes
+   for the shared secret 12345678901234567890
+   Notice that the shared secret has to be written in hexadecimal
+   when calling oathtool:
+
+   $ oathtool -w 10 3132333435363738393031323334353637383930
+   755224
+   287082
+   359152
+   969429
+   338314
+
+6. Enter the code into the prompt from dynalogin_tester
 
 7. Try various tests:
 
@@ -26,4 +57,21 @@
      - attempt to enter various random numbers
      - attempt multiple consecutive failures
      - inspect the database content after each attempt
+
+8. To test the dynalogin client/server, you can
+
+  a) run `make check' to compile the test code
+
+  b) run the command
+ 
+        libdynaloginclient/test_client \
+             <host> <port> <user> <scheme> <code>
+
+     It expects the dynalogind server to be using TLS.
+     It uses the default CA file /etc/ssl/certs/ca-certificates.crt
+
+9. To test the PHP code, copy the files from php/*.php to your
+   web server.  Run the test from a browser, e.g.
+
+    http://localhost/dynalogin_testing/test_dynalogin.php
 
