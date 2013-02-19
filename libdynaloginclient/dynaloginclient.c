@@ -184,7 +184,7 @@ dynalogin_client_t *dynalogin_session_start(const char *server, int port, const 
 	if(_ca_file == NULL)
 		_ca_file = CA_FILE;
 	gnutls_certificate_set_x509_trust_file (session->xcred, _ca_file, GNUTLS_X509_FMT_PEM);
-	//gnutls_certificate_set_verify_function (session->xcred, _verify_certificate_callback);
+	gnutls_certificate_set_verify_function (session->xcred, _verify_certificate_callback);
 
 	/* If client holds a certificate it can be set using the following:
 	 *
