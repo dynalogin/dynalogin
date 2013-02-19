@@ -226,7 +226,7 @@ function filesystem_user_verify_dynalogin($uid, $test_user, $credentials) {
 
     return (dynalogin_auth($dynalogin_user, $credentials['pass'],
         DYNALOGIN_SERVER_NAME, DYNALOGIN_SERVER_PORT,
-        $dynalogin_scheme, DYNALOGIN_USE_TLS) == 1);
+        $dynalogin_scheme, DYNALOGIN_USE_TLS, DYNALOGIN_TLS_CA_FILE) == 1);
 
     return false;
 }
