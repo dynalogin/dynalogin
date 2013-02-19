@@ -1,7 +1,11 @@
 
 [MySQL]
 Description = ODBC for MySQL
-Driver = /usr/lib/odbc/libmyodbc.so
-Setup = /usr/lib/odbc/libodbcmyS.so
+; For non-multiarch systems:
+;Driver = /usr/lib/odbc/libmyodbc.so
+;Setup = /usr/lib/odbc/libodbcmyS.so
+; For multiarch (e.g. recent Debian, Ubuntu):
+Driver = /usr/lib/x86_64-linux-gnu/odbc/libmyodbc.so
+Setup = /usr/lib/x86_64-linux-gnu/odbc/libodbcmyS.so
 UsageCount = 2
 
