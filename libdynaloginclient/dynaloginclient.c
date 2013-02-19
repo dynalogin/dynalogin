@@ -283,55 +283,6 @@ dynalogin_client_t *dynalogin_session_start(const char *server, int port, const 
 	return NULL;
 }
 
-/* This function will verify the peer's certificate, and check
- * if the hostname matches, as well as the activation, expiration dates.
- */
-// FIXME: from more modern gnutls3.1 examples, should we use it?
-static int
-_verify_certificate_callback_new (gnutls_session_t session)
-{
-	unsigned int status;
-	int ret, type;
-	const char *hostname;
-	gnutls_datum_t out;
-
-	/* read hostname */
-	hostname = gnutls_session_get_ptr (session);
-
-	/* This verification function uses the trusted CAs in the credentials
-	 * structure. So you must have installed one or more CA certificates.
-	 */
-	// FIXME: gnutls3.1 version:
-	//ret = gnutls_certificate_verify_peers3 (session, hostname, &status);
-	ret = gnutls_certificate_verify_peers2 (session, &status);
-	if (ret < 0)
-	{
-		syslog(LOG_ERR, "Error verifying server cert");
-		return GNUTLS_E_CERTIFICATE_ERROR;
-	}
-
-	type = gnutls_certificate_type_get (session);
-
-	// FIXME, code commented out to avoid undefined symbol warning
-/*	ret = gnutls_certificate_verification_status_print( status, type, &out, 0);
-	if (ret < 0)
-	{
-		syslog(LOG_ERR, "Error verifying server cert");
-		return GNUTLS_E_CERTIFICATE_ERROR;
-	} */
-
-	gnutls_free(out.data);
-
-	if (status != 0) /* Certificate is not trusted */
-	{
-		syslog(LOG_ERR, "Error verifying server cert");
-		return GNUTLS_E_CERTIFICATE_ERROR;
-	}
-
-	/* notify gnutls to continue handshake normally */
-	return 0;
-}
-
 static int
 _verify_certificate_callback (gnutls_session_t session)
 {
