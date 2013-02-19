@@ -1,6 +1,6 @@
 
 
-AC_INIT(dynalogin,0.10.8)
+AC_INIT(dynalogin,1.0.0)
 AC_CONFIG_SRCDIR(libdynalogin/dynalogin.c)
 
 AC_CONFIG_AUX_DIR([build-aux])
