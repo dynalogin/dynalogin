@@ -229,8 +229,6 @@ dynalogin_client_t *dynalogin_session_start(const char *server, int port, const 
 	}
 
 	gnutls_transport_set_ptr (session->tls_session, (gnutls_transport_ptr_t) (session->sd));
-	// FIXME: This is only available in gnutls 3.1
-	//gnutls_handshake_set_timeout (session->tls_session, GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT);
 
 	/* Perform the TLS handshake
 	 */
