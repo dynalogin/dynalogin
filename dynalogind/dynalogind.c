@@ -639,14 +639,6 @@ int main(int argc, char *argv[])
 		gnutls_global_init ();
 
 		gnutls_certificate_allocate_credentials (&x509_cred);
-		/* gnutls_certificate_set_x509_system_trust(xcred); */
-		/* gnutls_certificate_set_verify_flags (x509_cred,
-		                                       GNUTLS_VERIFY_ALLOW_SIGN_RSA_MD5); */
-		/* gnutls_certificate_set_x509_trust_file (x509_cred, "/etc/ssl/certs/ca-certificates.txt",
-				GNUTLS_X509_FMT_PEM); */
-
-		/* gnutls_certificate_set_x509_crl_file (x509_cred, "/tmp/crl.pem",
-				GNUTLS_X509_FMT_PEM); */
 
 		ret = gnutls_certificate_set_x509_key_file (x509_cred, tls_cert, tls_key,
 				GNUTLS_X509_FMT_PEM);

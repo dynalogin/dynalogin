@@ -17,6 +17,7 @@ To enable OATH (HOTP and TOTP) authentication from SimpleID:
       define('DYNALOGIN_SERVER_PORT', 9050);
       define('DYNALOGIN_USE_TLS', true);
       define('DYNALOGIN_DEFAULT_SCHEME, 'HOTP');
+      define('DYNALOGIN_TLS_CA_FILE', '/etc/ssl/certs/ca-certificates.crt');
 
 3. Create user identity files (or amend existing identity files) with
    particular reference to the dynalogin parameters - see the include

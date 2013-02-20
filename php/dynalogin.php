@@ -25,9 +25,19 @@ function dynalogin_write($fp, $msg) {
     fwrite($fp, $msg);
 }
 
-function dynalogin_try_command($server, $port, $use_tls, $command) {
+function dynalogin_try_command($server, $port, $use_tls, $command, $ca_file = "") {
     if($use_tls) {
-        $fp = stream_socket_client("tls://".$server.':'.$port, $errno, $errstr);
+        if ($ca_file !== null && $ca_file != "") {
+            $sslopts = array();
+            $sslopts['cafile'] = $ca_file;
+            $sslopts['verify_peer'] = TRUE;
+            $sslopts['verify_depth'] = 10;
+        }
+        $opts = array('tls' => $sslopts, 'ssl' => $sslopts);
+        $ctx = stream_context_create($opts);
+        $timeout = 60;
+        $flags = STREAM_CLIENT_CONNECT;
+        $fp = stream_socket_client("tls://".$server.':'.$port, $errno, $errstr, $timeout, $flags, $ctx);
     } else {  
         $fp = stream_socket_client("tcp://".$server.':'.$port, $errno, $errstr);
     }
@@ -60,15 +70,15 @@ function dynalogin_try_command($server, $port, $use_tls, $command) {
     return $logged_in;
 }
 
-function dynalogin_auth($user, $code, $server, $port, $scheme = "HOTP", $use_tls = false) {
+function dynalogin_auth($user, $code, $server, $port, $scheme = "HOTP", $use_tls = false, $ca_file = "") {
     $request = "UDATA $scheme $user $code";
-    return dynalogin_try_command($server, $port, $use_tls, $request);
+    return dynalogin_try_command($server, $port, $use_tls, $request, $ca_file);
 }
 
 function dynalogin_auth_digest($user, $realm, $response, $digest_suffix,
-    $server, $port, $scheme = "HOTP", $use_tls = false) {
+    $server, $port, $scheme = "HOTP", $use_tls = false, $ca_file = "") {
     $request = "UDATA ".$scheme."-DIGEST $user $realm $response $digest_suffix";
-    return dynalogin_try_command($server, $port, $use_tls, $request);
+    return dynalogin_try_command($server, $port, $use_tls, $request, $ca_file);
 }
 
 ?>

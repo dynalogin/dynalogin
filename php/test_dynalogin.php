@@ -17,7 +17,7 @@ if (isset($_POST['user'])) {
 
   if(dynalogin_auth($my_user, $my_code,
      $my_host, $my_port, $my_scheme,
-     true)) {
+     true, "/etc/ssl/certs/ca-certificates.crt")) {
     $my_result = "success";
   } else {
     $my_result = "fail";
