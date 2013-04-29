@@ -267,7 +267,19 @@ dynalogin_result_t dynalogin_authenticate_internal
 		else
 		{
 			fail_inc = 0;
+			syslog(LOG_WARNING, "Token replay detected, denying authentication");
 			rc = OATH_REPLAYED_OTP;
+		}
+		/* totp_offset only contains a valid value if the OTP was 
+		   inside the specified window - in that case the rc is the 
+		   absolute offset */
+		if(rc>=0 && totp_offset < 0) 
+		{
+		    syslog(LOG_WARNING, "TOTP validation returned offset %d (~%d seconds behind)",totp_offset,rc*h->totp_x);
+		}
+		else if(rc > 0)
+		{
+		    syslog(LOG_WARNING, "TOTP validation returned offset %d (~%d seconds ahead)",totp_offset,rc*h->totp_x);
 		}
 		break;
 	default:
