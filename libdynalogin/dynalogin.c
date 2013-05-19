@@ -290,8 +290,16 @@ dynalogin_result_t dynalogin_authenticate_internal
 	apr_pool_destroy(pvt->pool);
 	if(rc < 0)
 	{
-		ud->failure_count += fail_inc;
-		res = DYNALOGIN_DENY;
+		if(ud->failure_count > 3)
+        	{
+        		ud->locked = 1;
+        		res = DYNALOGIN_DENY;
+        	}
+        	else
+        	{
+        		ud->failure_count += fail_inc;
+        		res = DYNALOGIN_DENY;
+        	}
 	}
 	else
 	{
