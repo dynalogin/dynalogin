@@ -76,7 +76,7 @@ apr_status_t read_line(apr_pool_t *pool, socket_thread_data_t *td,
 	{
 		syslog(LOG_ERR, "read_line: apr_pcalloc failed");
 		apr_pool_destroy(pool);
-		return;
+		return APR_EGENERAL;
 	}
 	_buf = *buf;
 
