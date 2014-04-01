@@ -627,15 +627,8 @@ int main(int argc, char *argv[])
 
 	GET_STRING_PARAM_DEF(tls_cert, config, DYNALOGIND_PARAM_TLS_CERT, NULL)
 	GET_STRING_PARAM_DEF(tls_key, config, DYNALOGIND_PARAM_TLS_KEY, NULL)
-	if(tls_cert != NULL)
+	if(tls_cert != NULL && tls_key != NULL)
 	{
-		if(tls_key == NULL)
-		{
-			syslog(LOG_ERR, "%s specified, but %s not specified", DYNALOGIND_PARAM_TLS_CERT,
-					DYNALOGIND_PARAM_TLS_KEY);
-			return 1;
-		}
-
 		gnutls_global_init ();
 
 		gnutls_certificate_allocate_credentials (&x509_cred);
@@ -654,7 +647,13 @@ int main(int argc, char *argv[])
 
 		gnutls_certificate_set_dh_params (x509_cred, dh_params);
 	}
-	else if(tls_key == NULL)
+	else if(tls_cert != NULL && tls_key == NULL)
+	{
+		syslog(LOG_ERR, "%s specified, but %s not specified", DYNALOGIND_PARAM_TLS_CERT,
+				DYNALOGIND_PARAM_TLS_KEY);
+		return 1;
+	}
+	else if(tls_key != NULL && tls_cert == NULL)
 	{
 		syslog(LOG_ERR, "%s specified, but %s not specified", DYNALOGIND_PARAM_TLS_KEY,
 				DYNALOGIND_PARAM_TLS_CERT);
