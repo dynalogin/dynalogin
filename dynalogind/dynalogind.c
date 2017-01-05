@@ -547,7 +547,7 @@ int main(int argc, char *argv[])
 	/* Just return an error if a client closes a socket */
 	apr_signal_block(SIGPIPE);
 
-	openlog(argv[0], LOG_PID, LOG_AUTHPRIV);
+	openlog(argv[0], LOG_PID | LOG_CONS, LOG_AUTHPRIV);
 
 	if((res = apr_pool_create(&pool, NULL)) != APR_SUCCESS)
 	{
